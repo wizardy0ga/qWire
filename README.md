@@ -37,3 +37,6 @@ Server tested on:
 * Encrypted Communications
 * Hardcoded enumeration command
 * DNS Update (Via DuckDNS)
+* Multi Client Server
+* Agent Builder (Compiler not included)
+* GUI Application (qt)
