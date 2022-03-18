@@ -1,0 +1,17 @@
+<RCC>
+  <qresource prefix="img">
+    <file>qWire_info.png</file>
+    <file>sysinfo_win_bg.jpg</file>
+    <file>grey_box.jpg</file>
+    <file>shell_background.png</file>
+    <file>settings_background.png</file>
+    <file>sync_icon.png</file>
+    <file>ghost_wire_ascii.png</file>
+    <file>info_icon.png</file>
+    <file>blackbox.jpeg</file>
+    <file>settings_icon.png</file>
+    <file>duck_dns_icon.png</file>
+    <file>main_tab_background.jpg</file>
+    <file>satellite_icon.png</file>
+  </qresource>
+</RCC>
