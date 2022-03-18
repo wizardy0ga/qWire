@@ -31,7 +31,7 @@ Server tested on:
 * Power Management (Shutdown/Reboot)
 * Python Meterpreter Shell
 * PowerShell Shell
-* Screen Shot
+* Screenshot
 * BSoD
 * Simple Networking (Disconnect/Reconnect/Ping)
 * Encrypted Communications
