@@ -21,9 +21,11 @@ This software is provided "as-is" with no support to the end user. The end user 
 If you're looking for an open-source project to abuse, Look elsewhere. The author of qWire is not responsible for the illicit use of this program. As stated above, there is no support provided for this program. If you use or modify this code to attack computer systems, that is entirely on you. The author does not support, condone or encourage the illicit use of this software. Any attempts to do so are strongly discouraged by the author. This project is for educational purposes only.
 
 # Environment
-Created with python 3.9.X    
+Created with Python 3.9.X  
+
 Client tested on:  
 * Windows 10
+
 Server tested on:  
 * Debian  
 
