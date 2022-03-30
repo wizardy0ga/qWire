@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.0
+# Build:  1.0.1
 # -------------------------------------------------------------
 import netifaces
 import requests
@@ -26,11 +26,11 @@ class NicHandler:
 
 #Function checks the value of the host and then returns IP values if called for
     def validate_host(self,host):
-        if host == 'Local IP':
-            host = IPAddress().get_local_ip_from_interface()
-        elif host == 'Public IP':
-            host = IPAddress().get_public_ip_string()
-        return host
+        if host == 'Local IP':                    #If the host value is == local IP
+            host = IPAddress().get_local_ip_from_interface() #set host to local ip address
+        elif host == 'Public IP':                 #If the host is public IP,
+            host = IPAddress().get_public_ip_string()        #set the host to the local ip
+        return host                               #Return the value of host
 
 class IPAddress:
 

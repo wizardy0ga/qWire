@@ -10,17 +10,24 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.0
+# Build:  1.0.1
 # -------------------------------------------------------------
 from ..utils.file_paths import BGPath
 from ..Qt5.icons import IconObj
 from PyQt5 import QtCore
+from PIL import Image
 
 class Ui_information_window(object):
+    #Function will get the size of the screenshot to define the borders of the window
+    def get_image_size(self):
+        image = Image.open(BGPath().qWire_info_bg)        #Create image object
+        self.width, self.height = image.size                    #Capture width and height of image object
+
     def setupUi(self, information_window):
+        self.get_image_size()
         information_window.setObjectName("information_window")
         information_window.setWindowIcon(IconObj().main_window_icon)
-        information_window.resize(628, 327)
+        information_window.resize(self.width,self.height)
         information_window.setStyleSheet(f"background-image: url({BGPath().qWire_info_bg});")
 
         self.retranslateUi(information_window)

