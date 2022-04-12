@@ -33,7 +33,7 @@ BUILD_101 = ['Build 1.0.1',
              'Agent variable length is now configurable in Settings > Builder > Variable Length']
 
 BUILD_102 = ['Build 1.0.2',
-             'TBD',
+             'April 12th, 2022',
              'Fixed various bugs related to the network interface',
              'Other bug fixes',
              'Re-arranged main gui widgets. Main gui now has a maximum size',
