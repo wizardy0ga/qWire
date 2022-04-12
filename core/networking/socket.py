@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 import socket
 import base64
@@ -57,20 +57,29 @@ class ServerSocket:
             try:
                 self.new_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)          #Create a new socket
                 self.new_socket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)         #Make the socket address reusable
-                self.bind_socket_to_port(port_number)                                       #Bind socket to port
+                if self.bind_socket_to_port(port_number) == True:                           #If the socket is successfully bound to the port,
+                    return True                                                             #Return true to indicate the socket has been boune
             except socket.error as error:                                                   #If there's an error,
                 #Raise a notifaction with the error string
-                ErrorHandling().raise_error(str(error),
+                ErrorHandling().raise_error(str(error),                                     #Raise error
                                             '',
                                             'Error')
+        return False                                                                        #Return false to indicate the socket was not bound
 
     #Function will get local ip address of chosen interface, bind the socket to it and append it to an array for later usage
     def bind_socket_to_port(self, port_number):
         current_local_IP = IPAddress().get_local_ip_from_interface() # Get Local IP from tun0 interface
+        if current_local_IP == '':
+            ErrorHandling().raise_error('Socket could not be bound to empty host string',
+                                        '',
+                                        'Creation Error')
+            ConsoleWindow().log_to_console('Can not bind socket to empty host string')
+            return False
         self.new_socket.bind((current_local_IP,port_number)) # Bind socket to interface and port
         server_socket_obj_array.append([self.new_socket]) #Append bound socket to array for later use
         active_sockets_array.append(port_number) #Append port number identifying socket so it wont be created multiple times
         ConsoleWindow().log_to_console(f'Bound socket to {current_local_IP}:{port_number}')
+        return True
 
     #Function will remove socket from socket array
     def remove_socket_from_array(self, socket_port_number):
@@ -186,4 +195,5 @@ class ServerSocket:
     #Function will encrypt data and send it to the client
     def send_data_to_client(self,client,encryption_key,data):
         encrypted_data = Encryption().encrypt_data(encryption_key,data) #encrypt the data parameter
-        client.sendall(encrypted_data) #send the encrypted data
+        sep = f'{str(len(encrypted_data))}|'.encode() #Create processable string with length of encrypted data for client to process
+        client.sendall(sep+encrypted_data) #send the length of and the encrypted data

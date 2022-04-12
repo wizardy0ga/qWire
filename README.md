@@ -52,3 +52,13 @@ Server tested on:
 * Encryption iterations for agent builder now configurable in settings
 * Main window now dispalys build number ex: qWire CnC Build: 101
 * Agent variable length is now configurable in Settings > Builder > Variable Length
+
+# Update 1.0.2
+* Fixed various bugs related to the network interface
+* Various other bug fixes
+* Re-arranged main gui widgets
+* Main gui now has a maximum size
+* Connection & Task Manager widgets will now highlight the entire row
+* Added meterpreter shellcode injector in the Task Manager 
+* Added x64/Reverse TCP payload to injector
+* Added CMD Shell to Shells > System Shells

@@ -11,7 +11,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 from core.Qt5.ghost_wire_gui import Ui_main_window
 from core.utils.file_paths import DSFilePath
@@ -35,7 +35,6 @@ class ShutDown:
     #Function will find the pid of the program and kill it completely. Leaves no child process's behind
     def kill_pid(self):
         pid = os.getpid()           #Get the pid of the parent process
-        #print(str(pid))
         os.kill(pid,signal.SIGTERM) #Kill the process and all subprocess's
 
 

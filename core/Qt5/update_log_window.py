@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 from PyQt5 import QtCore, QtGui, QtWidgets
 from ..Qt5.icons import IconObj
@@ -22,7 +22,7 @@ BUILD_100 = ['Build 1.0.0',
             'Initial release of qWire version 1.0.0']
 
 BUILD_101 = ['Build 1.0.1',
-             'TBD',
+             'March 30th, 2022',
              'Added discord notifications option via discord server webhook',
              'Reconfigured controller buttons to become menu buttons in the top left of the main GUI',
              'Added update log to keep track of what has been done to the program',
@@ -32,8 +32,19 @@ BUILD_101 = ['Build 1.0.1',
              'Main window now dispalys build number ex: qWire CnC Build: 101',
              'Agent variable length is now configurable in Settings > Builder > Variable Length']
 
+BUILD_102 = ['Build 1.0.2',
+             'TBD',
+             'Fixed various bugs related to the network interface',
+             'Other bug fixes',
+             'Re-arranged main gui widgets. Main gui now has a maximum size',
+             'Connection & Task Manager widgets will now highlight the entire row when an item is clicked',
+             'Added meterpreter shellcode injector in the Task Manager',
+             'Added x64/Reverse TCP payload to injector',
+             'Added CMD Shell to Shells > System Shells']
+
 MASTER_ARRAY = [BUILD_100,
-                BUILD_101]
+                BUILD_101,
+                BUILD_102]
 
 class Ui_update_log_window(object):
 

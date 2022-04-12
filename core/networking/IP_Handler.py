@@ -10,12 +10,13 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 import netifaces
 import requests
 import os
 
+from ..utils.utils import ErrorHandling
 from ..logging.logging import NetworkingConfigs
 
 class NicHandler:
@@ -42,11 +43,22 @@ class IPAddress:
     #Function will return local ip from interface in cfg file
     def get_local_ip_from_interface(self):
         current_interface = NetworkingConfigs().retrieve_network_interface()        #get the current interface from the cfg file
-        interface_dict = netifaces.ifaddresses(current_interface)                   #get dict value from current interface
-        interface = interface_dict[2]                                               #Index the dict
-        strip = interface[0]                                                        #Index again
-        local_ip = strip.get('addr')                                                #Get the local ip assigned to the 'addr' value
-        return local_ip                                                             #Return the local ip string
+        if current_interface == '':                                                 #If the current interface is an empty string
+            ErrorHandling().raise_error('Invalid network interface',                #Raise error
+                                        'Please select an interface in the settings',
+                                        'NIC Error')
+            return ''                                                               #Return empty string to trigger other errors
+        try:                                                                        #Start new try block to catch error
+            interface_dict = netifaces.ifaddresses(current_interface)                   #get dict value from current interface
+            interface = interface_dict[2]                                               #Index the dict
+            strip = interface[0]                                                        #Index again
+            local_ip = strip.get('addr')                                                #Get the local ip assigned to the 'addr' value
+            return local_ip                                                             #Return the local ip string
+        except ValueError:                                                          #If there's an error
+            ErrorHandling().raise_error('Current interfact is invalid',             #Raise error
+                                        'Check your network interface',
+                                        'NIC Error')
+            return ''                                                               #Return empty string
 
     #Funtion will get the geolocation of an ip address
     def get_ip_geolocation(self, ip_address):

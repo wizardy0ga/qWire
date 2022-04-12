@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 import os
 
@@ -43,6 +43,7 @@ class DSFilePath:
         self.task_manager_file = LoggingUtilitys().get_misc_file_path_str('data_storage/sysinfo_window/task_list.txt')
         self.task_manager_csv = LoggingUtilitys().get_misc_file_path_str('data_storage/sysinfo_window/task_list.csv')
         self.job_file = LoggingUtilitys().get_misc_file_path_str('data_storage/sysinfo_window/job.txt')
+        self.msf_shellcode_file = LoggingUtilitys().get_misc_file_path_str('data_storage/shellcode.txt')
 
 #Config file paths
 class CFGFilePath:
@@ -65,7 +66,7 @@ class BGPath:
     def __init__(self):
         self.qWire_info_bg = LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/qWire_info.png')
         self.main_window_bg = LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/main_tab_background.jpg')
-        self.cheap_loic_lol = LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/Listener.jpeg')
+        self.cheap_loic_lol = LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/Listener.jpeg') #Shout out Sven!
         self.settings_window_bg = LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/settings_background.jpg')
         self.black_box = LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/blackbox.jpeg')
         self.task_man_bg = LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/task_man_bg.jpg')

