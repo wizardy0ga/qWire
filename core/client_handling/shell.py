@@ -17,7 +17,7 @@ import os
 from core.networking.sockets.server_socket import ServerSocket
 from core.networking.utils.IP_Handler import IPAddress
 from core.client_handling.flags import ClientActionFlags
-from core.logging.logging import DNSconfigs,LoggingUtilitys,NetworkingConfigs,ConsoleWindow
+from core.logging.logging import DNSconfigs,LoggingUtilitys,NetworkingConfigs
 from core.client_handling.meterpreter_payloads import MSFPayload
 from core.client_handling.payload_code import PayloadCode
 from core.utils.file_paths import DSFilePath

@@ -12,7 +12,7 @@
 # Github: https://github.com/slizbinksman
 # Build:  1.0.21
 # -------------------------------------------------------------
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.Qt import Qt
 from PyQt5.QtWidgets import QWidget,QMenu
 from PyQt5.QtCore import QEvent
