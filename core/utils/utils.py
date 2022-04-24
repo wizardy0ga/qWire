@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
@@ -101,7 +101,7 @@ class Validation():
             if split_file[1] == file_extention:     #If the 2nd index is == file extention parameter
                 return True                         #return true
             return False                            #else return false
-        except IndexError:                          #If their is no .
+        except IndexError:                          #If there is no .
             return False                            #Return false
 
     #Function will validate an integer date type

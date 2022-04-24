@@ -10,12 +10,12 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
-from PyQt5 import QtCore, QtGui, QtWidgets
-from ..Qt5.icons import IconObj
-from ..logging.logging import DiscordCFG,ConsoleWindow
-from ..utils.utils import Notifications,Validation,ErrorHandling
+from PyQt5 import QtCore, QtWidgets
+from core.Qt5.icons import IconObj
+from core.logging.logging import DiscordCFG,ConsoleWindow
+from core.utils.utils import Notifications,Validation,ErrorHandling
 
 class Ui_webhook_dialog(object):
 
@@ -42,16 +42,30 @@ class Ui_webhook_dialog(object):
             self.webhook_input.clear()                                              #Clear the input box
 
     def setupUi(self, webhook_dialog):
+        """
+        Initialize UI parameter
+        """
         webhook_dialog.setObjectName("webhook_dialog")
         webhook_dialog.resize(400, 80)
         webhook_dialog.setWindowIcon(IconObj().discord_icon)
+        """
+        Create gui objects
+        """
         self.update_webhook_button = QtWidgets.QPushButton(webhook_dialog,clicked=lambda: self.update_webhook(webhook_dialog))
-        self.update_webhook_button.setGeometry(QtCore.QRect(300, 50, 87, 27))
-        self.update_webhook_button.setObjectName("update_webhook_button")
         self.webhook_input = QtWidgets.QLineEdit(webhook_dialog)
+        """
+        Set object sizes
+        """
         self.webhook_input.setGeometry(QtCore.QRect(10, 10, 381, 31))
+        self.update_webhook_button.setGeometry(QtCore.QRect(300, 50, 87, 27))
+        """
+        Set object names
+        """
+        self.update_webhook_button.setObjectName("update_webhook_button")
         self.webhook_input.setObjectName("webhook_input")
-
+        """
+        Finish setting up the UI
+        """
         self.retranslateUi(webhook_dialog)
         QtCore.QMetaObject.connectSlotsByName(webhook_dialog)
 

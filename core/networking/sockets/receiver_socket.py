@@ -10,15 +10,15 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 import socket
 
-from ..logging.logging import ConsoleWindow,LoggingUtilitys
-from ..encryption.aes128 import Decryption
-from ..networking.IP_Handler import IPAddress
-from ..utils.file_paths import DSFilePath
-from ..logging.logging import NetworkingConfigs
+from core.logging.logging import ConsoleWindow,LoggingUtilitys
+from core.encryption.aes128 import Decryption
+from core.networking.utils.IP_Handler import IPAddress
+from core.utils.file_paths import DSFilePath
+from core.logging.logging import NetworkingConfigs
 
 BUFFER = 4096
 
@@ -63,6 +63,12 @@ class ReceiverSocket:
             if not partial_data:                            # If the data is an empty string, all data has been sent
                 break                                       # Data transmission is complete. Break the loop
         return bytes_data                                   # Return byte data string sent from server
+
+    #Function will receive and return string from client
+    def recv_string(self,encryption_key):
+        self.create_receiver_socket()                       #Create receiver socket
+        string = self.get_data_from_client(encryption_key)  #Get string
+        return string                                       #Return it
 
     #Function will receive ping reply and log it to the gui console
     def recv_ping_reply(self,encryption_key):

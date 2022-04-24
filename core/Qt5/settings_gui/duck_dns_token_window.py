@@ -10,12 +10,12 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
-from PyQt5 import QtCore, QtGui, QtWidgets
-from ..logging.logging import LoggingUtilitys,DNSconfigs
-from ..utils.utils import Notifications
-from ..Qt5.icons import IconObj
+from PyQt5 import QtCore, QtWidgets
+from core.logging.logging import DNSconfigs
+from core.utils.utils import Notifications
+from core.Qt5.icons import IconObj
 
 class Ui_dns_token_window(object):
 
@@ -26,16 +26,30 @@ class Ui_dns_token_window(object):
         Notifications().raise_notification(f'Updated token to {new_token}','Success') #Raise notification
 
     def setupUi(self, dns_token_window):
+        """
+        Initialize UI parameters
+        """
         dns_token_window.setObjectName("dns_token_window")
         dns_token_window.resize(400, 136)
         dns_token_window.setWindowIcon(IconObj().duck_dns_icon)
+        """
+        Create widget objects
+        """
         self.update_dns_button = QtWidgets.QPushButton(dns_token_window,clicked=lambda: self.update_token(self.dns_token_input.text(),dns_token_window))
-        self.update_dns_button.setGeometry(QtCore.QRect(260, 100, 131, 31))
-        self.update_dns_button.setObjectName("pushButton")
         self.dns_token_input = QtWidgets.QLineEdit(dns_token_window)
+        """
+        set widget geometery
+        """
+        self.update_dns_button.setGeometry(QtCore.QRect(260, 100, 131, 31))
         self.dns_token_input.setGeometry(QtCore.QRect(10, 30, 381, 33))
+        """
+        Set widget names
+        """
+        self.update_dns_button.setObjectName("pushButton")
         self.dns_token_input.setObjectName("dns_token_input")
-
+        """
+        Finish setting up UI
+        """
         self.retranslateUi(dns_token_window)
         QtCore.QMetaObject.connectSlotsByName(dns_token_window)
 
@@ -45,12 +59,3 @@ class Ui_dns_token_window(object):
         self.update_dns_button.setText(_translate("dns_token_window", "Update Token"))
         current_token = DNSconfigs().retrieve_dns_token()                           #Retrieve current dns token from file
         self.dns_token_input.setText(_translate("dns_token_window", current_token)) #Add token to the token input widget
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    dns_token_window = QtWidgets.QDialog()
-    ui = Ui_dns_token_window()
-    ui.setupUi(dns_token_window)
-    dns_token_window.show()
-    sys.exit(app.exec_())

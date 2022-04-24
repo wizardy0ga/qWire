@@ -10,9 +10,23 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 import threading
+from PyQt5 import QtCore
+
+#Thread for running background tasks. Qt does not run well with the pythons threading libs
+class ProcessRunnable(QtCore.QRunnable):
+    def __init__(self, target, args):
+        QtCore.QRunnable.__init__(self)
+        self.t = target
+        self.args = args
+
+    def run(self):
+        self.t()
+
+    def start(self):
+        QtCore.QThreadPool.globalInstance().start(self)
 
 class MultiThreading():
     #Function will create a thread for functions with no arguments

@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 #Class is for storing flag strings to make the client do different actions
 class ClientActionFlags:
@@ -29,3 +29,4 @@ class ClientActionFlags:
         self.disconnect = 'disconnect'
         self.task_manager = 'proc_list'
         self.kill_process = 'terminate'
+        self.snapshot = 'snap_shot'

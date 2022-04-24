@@ -10,11 +10,11 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
-from PyQt5 import QtCore, QtGui, QtWidgets
-from ..Qt5.icons import IconObj
-from ..utils.file_paths import BGPath
+from PyQt5 import QtCore, QtWidgets
+from core.Qt5.icons import IconObj
+from core.utils.file_paths import BGPath
 
 
 BUILD_100 = ['Build 1.0.0',
@@ -42,16 +42,30 @@ BUILD_102 = ['Build 1.0.2',
              'Added x64/Reverse TCP payload to injector',
              'Added CMD Shell to Shells > System Shells']
 
+
+BUILD_1021 = ['Build 1.0.21',
+              'April 23rd 2022',
+              're-organized code for GUI\'s',
+              'Re-structured some of the file hierarchy around the builder and the GUI\'s'
+              'Added webcam snapshot feature to surveillance',
+              'Re - Structured Surveillance menu',
+              '    Surveillance > Desktop > Screenshot',
+              '    Surveillance > Webcam > Snapshot',
+              'Various code optimizations',
+              'Fixed issue with agent disconnecting when server shuts down during initial handshake'
+              ]
+
 MASTER_ARRAY = [BUILD_100,
                 BUILD_101,
-                BUILD_102]
+                BUILD_102,
+                BUILD_1021,]
 
 class Ui_update_log_window(object):
 
     #Function will generate banner string with release date and build version
     def generate_version_banner(self,build_version,release_date):
         banner = f"""##########################################
-{build_version}|-|-|{release_date}
+{build_version}|-|-|-|-|-|-|-|{release_date}
 ##########################################"""
         return banner
 
@@ -66,12 +80,27 @@ class Ui_update_log_window(object):
                 self.update_log_widget.addItem(update_item)                      #Log the update
 
     def setupUi(self, update_log_window):
+        """
+        Initialize UI parameters
+        """
         update_log_window.setObjectName("update_log_window")
         update_log_window.resize(877, 565)
         update_log_window.setWindowIcon(IconObj().sync_icon)
+        """
+        Create widget objects
+        """
         self.update_log_widget = QtWidgets.QListWidget(update_log_window)
+        """
+        Set widget geometry
+        """
         self.update_log_widget.setGeometry(QtCore.QRect(10, 10, 861, 551))
+        """
+        Set widget object names
+        """
         self.update_log_widget.setObjectName("update_log_widget")
+        """
+        Finish setting up UI
+        """
         self.update_log_widget.setStyleSheet(f"background-image: url({BGPath().black_box});")
         self.record_updates_to_log(MASTER_ARRAY)
         self.retranslateUi(update_log_window)

@@ -10,11 +10,11 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
 from PyQt5 import QtCore, QtWidgets
-from ..Qt5.icons import IconObj
-from ..logging.logging import DNSconfigs
+from core.Qt5.icons import IconObj
+from core.logging.logging import DNSconfigs
 
 class Ui_domains_window(object):
 
@@ -33,24 +33,42 @@ class Ui_domains_window(object):
         self.new_domain_input.clear()               #Clear the domain input bar
 
     def setupUi(self, domains_window):
+        """
+        Initialize UI parameters
+        """
         domains_window.setObjectName("domains_window")
         domains_window.resize(282, 247)
         domains_window.setWindowIcon(IconObj().duck_dns_icon)
+        """
+        Create widget objects
+        """
         self.domains_list = QtWidgets.QListWidget(domains_window)
+        self.new_domain_input = QtWidgets.QLineEdit(domains_window)
+        self.add_domain_button = QtWidgets.QPushButton(domains_window, clicked=lambda: self.add_domain_to_file(
+            self.new_domain_input.text()))
+        self.del_domain_button = QtWidgets.QPushButton(domains_window, clicked=lambda: self.remove_domain_from_list())
+        """
+        Set widget geometry
+        """
         self.domains_list.setGeometry(QtCore.QRect(0, 10, 281, 171))
+        self.new_domain_input.setGeometry(QtCore.QRect(0, 210, 201, 31))
+        self.add_domain_button.setGeometry(QtCore.QRect(210, 210, 31, 31))
+        self.del_domain_button.setGeometry(QtCore.QRect(250, 210, 31, 31))
+        """
+        Set widget object names
+        """
         self.domains_list.setObjectName("domains_list")
+        self.new_domain_input.setObjectName("new_domain_input")
+        self.add_domain_button.setObjectName("add_domain_button")
+        self.del_domain_button.setObjectName("del_domain_button")
+        """
+        Populate domains list with current domains
+        """
         for domain in self.current_domains:             #get domains in the domain array
             self.domains_list.addItem(domain)           #append the array to the domains list
-        self.new_domain_input = QtWidgets.QLineEdit(domains_window)
-        self.new_domain_input.setGeometry(QtCore.QRect(0, 210, 201, 31))
-        self.new_domain_input.setObjectName("new_domain_input")
-        self.add_domain_button = QtWidgets.QPushButton(domains_window,clicked=lambda: self.add_domain_to_file(self.new_domain_input.text()))
-        self.add_domain_button.setGeometry(QtCore.QRect(210, 210, 31, 31))
-        self.add_domain_button.setObjectName("add_domain_button")
-        self.del_domain_button = QtWidgets.QPushButton(domains_window,clicked=lambda: self.remove_domain_from_list())
-        self.del_domain_button.setGeometry(QtCore.QRect(250, 210, 31, 31))
-        self.del_domain_button.setObjectName("del_domain_button")
-
+        """
+        Finish setting up UI
+        """
         self.retranslateUi(domains_window)
         QtCore.QMetaObject.connectSlotsByName(domains_window)
 

