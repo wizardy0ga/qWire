@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.21
+# Build:  1.0.22
 # -------------------------------------------------------------
 from ..logging.logging import LoggingUtilitys
 from PyQt5.QtGui import QIcon,QPixmap

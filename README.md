@@ -24,10 +24,11 @@ If you're looking for an open-source project to abuse, Look elsewhere. The autho
 Created with Python 3.9.X  
 
 Client tested on:  
-* Windows 10
+* Windows 10 x64
+* Windows 7 Ultimate SP1 x64
 
 Server tested on:  
-* Debian  
+* Debian 
 
 # Features at release 1.0.0
 * Power Management (Shutdown/Reboot)
@@ -72,3 +73,11 @@ Server tested on:
     * Surveillance > Webcam > Snapshot
 * Various code optimizations
 * Fixed issue with agent disconnecting when server shuts down during initial handshake
+
+# Update 1.0.22
+* Tested agent on Windows 7 Ultimate SP1. Working. 
+* Re-coded task manager on client and server
+* Optimized context menu code. Menu now loads instantly
+* Tested powershell reg key peristence on Windows 7. Working.
+* Created python injector in Task Manager. Can inject python code into process's.
+* Added CMD, PS and Python Meterpreter shells to the python injector

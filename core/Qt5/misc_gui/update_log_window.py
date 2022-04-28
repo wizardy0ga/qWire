@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.21
+# Build:  1.0.22
 # -------------------------------------------------------------
 from PyQt5 import QtCore, QtWidgets
 from core.Qt5.icons import IconObj
@@ -46,7 +46,7 @@ BUILD_102 = ['Build 1.0.2',
 BUILD_1021 = ['Build 1.0.21',
               'April 23rd 2022',
               're-organized code for GUI\'s',
-              'Re-structured some of the file hierarchy around the builder and the GUI\'s'
+              'Re-structured some of the file hierarchy around the builder and the GUI\'s',
               'Added webcam snapshot feature to surveillance',
               'Re - Structured Surveillance menu',
               '    Surveillance > Desktop > Screenshot',
@@ -55,10 +55,20 @@ BUILD_1021 = ['Build 1.0.21',
               'Fixed issue with agent disconnecting when server shuts down during initial handshake'
               ]
 
+BUILD_1022 = ['Build 1.0.22',
+              'TBD',
+              'Tested agent on Windows 7 Ultimate SP1',
+              'Re-coded task manager on client and server',
+              'Optimized context menu code. Menu now loads instantly',
+              'Test powershell reg key peristence on Windows 7. Working.',
+              'Added python injector to Task Manager',
+              'Added CMD, PS and Meterpreter shells to python injector']
+
 MASTER_ARRAY = [BUILD_100,
                 BUILD_101,
                 BUILD_102,
-                BUILD_1021,]
+                BUILD_1021,
+                BUILD_1022]
 
 class Ui_update_log_window(object):
 
