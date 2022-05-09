@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.22
+# Build:  1.0.23
 # -------------------------------------------------------------
 from PyQt5 import QtCore, QtWidgets
 from core.Qt5.icons import IconObj
@@ -56,7 +56,7 @@ BUILD_1021 = ['Build 1.0.21',
               ]
 
 BUILD_1022 = ['Build 1.0.22',
-              'TBD',
+              'April 27th, 2022',
               'Tested agent on Windows 7 Ultimate SP1',
               'Re-coded task manager on client and server',
               'Optimized context menu code. Menu now loads instantly',
@@ -64,11 +64,19 @@ BUILD_1022 = ['Build 1.0.22',
               'Added python injector to Task Manager',
               'Added CMD, PS and Meterpreter shells to python injector']
 
+BUILD_1023 = ['Build 1.0.23',
+              'May 9th, 2022',
+              'Created elevation module for agent.',
+              '    Elevation > UAC > [exploits]',
+              'Created two UAC elevation modules. Compmgmt & Eventvwr.',
+              ]
+
 MASTER_ARRAY = [BUILD_100,
                 BUILD_101,
                 BUILD_102,
                 BUILD_1021,
-                BUILD_1022]
+                BUILD_1022,
+                BUILD_1023]
 
 class Ui_update_log_window(object):
 

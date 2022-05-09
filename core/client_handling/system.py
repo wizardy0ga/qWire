@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.22
+# Build:  1.0.23
 # -------------------------------------------------------------
 from core.networking.sockets.server_socket import ServerSocket
 from core.client_handling.flags import ClientActionFlags

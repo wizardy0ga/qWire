@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.22
+# Build:  1.0.23
 # -------------------------------------------------------------
 from PyQt5 import QtCore, QtWidgets
 from core.Qt5.icons import IconObj
@@ -44,8 +44,7 @@ class Ui_domains_window(object):
         """
         self.domains_list = QtWidgets.QListWidget(domains_window)
         self.new_domain_input = QtWidgets.QLineEdit(domains_window)
-        self.add_domain_button = QtWidgets.QPushButton(domains_window, clicked=lambda: self.add_domain_to_file(
-            self.new_domain_input.text()))
+        self.add_domain_button = QtWidgets.QPushButton(domains_window, clicked=lambda: self.add_domain_to_file(self.new_domain_input.text()))
         self.del_domain_button = QtWidgets.QPushButton(domains_window, clicked=lambda: self.remove_domain_from_list())
         """
         Set widget geometry

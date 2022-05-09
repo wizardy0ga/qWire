@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.22
+# Build:  1.0.23
 # -------------------------------------------------------------
 from core.utils.file_paths import BGPath
 from core.Qt5.icons import IconObj

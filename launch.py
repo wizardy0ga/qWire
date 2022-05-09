@@ -11,7 +11,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.22
+# Build:  1.0.23
 # -------------------------------------------------------------
 from core.Qt5.main_window.qwire_main_gui import Ui_main_window
 from core.utils.file_paths import DSFilePath

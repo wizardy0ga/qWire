@@ -81,3 +81,8 @@ Server tested on:
 * Tested powershell reg key peristence on Windows 7. Working.
 * Created python injector in Task Manager. Can inject python code into process's.
 * Added CMD, PS and Python Meterpreter shells to the python injector
+
+# Update 1.0.23
+* Created elevation module for the agent
+    * Elevation > UAC > [modules]
+* Added eventvwr and compmgmt to elevation modules

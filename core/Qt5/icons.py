@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.22
+# Build:  1.0.23
 # -------------------------------------------------------------
 from ..logging.logging import LoggingUtilitys
 from PyQt5.QtGui import QIcon,QPixmap
@@ -54,6 +54,9 @@ class IconObj:
         self.windows_10_logo = QIcon(LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/windows_10_logo.png'))
         self.webcam_icon = QIcon(LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/webcam_icon.png'))
         self.file_icon = QIcon(LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/file_ex_icon.png'))
+        self.elevation_icon = QIcon(LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/lightning_icon.png'))
+        self.eventvwr_icon = QIcon(LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/eventvwr_icon.png'))
+        self.comp_mgmt_icon = QIcon(LoggingUtilitys().get_misc_file_path_str('core/Qt5/img/comp_mgmt_icon.png'))
 
 
 #Create image object with image file paths. This should be moved to utils/file_paths

